@@ -2,9 +2,10 @@
 
 import type React from "react"
 import { useState, useCallback } from "react"
-import { Upload, ImageIcon, X, LinkIcon, Zap } from "lucide-react"
+import { Upload, ImageIcon, X, LinkIcon, Zap, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import LoadingScreen from "@/components/loading-screen"
 import ResultsScreen from "@/components/results-screen"
@@ -16,6 +17,7 @@ export default function HomePage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageUrl, setImageUrl] = useState<string>("")
+  const [productContext, setProductContext] = useState<string>("") // Added product context state
   const [isDragOver, setIsDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploadMethod, setUploadMethod] = useState<"file" | "url">("file")
@@ -122,6 +124,7 @@ export default function HomePage() {
     setSelectedImage(null)
     setImagePreview(null)
     setImageUrl("")
+    setProductContext("") // Reset product context on new analysis
     setError(null)
   }
 
@@ -250,6 +253,24 @@ export default function HomePage() {
               </div>
             </div>
           )}
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-muted-foreground" />
+              <label htmlFor="product-context" className="text-sm font-medium text-foreground">
+                Contexto do produto (opcional)
+              </label>
+            </div>
+            <Textarea
+              id="product-context"
+              placeholder="Descreva seu produto: tipo de usuário, objetivo da tela, funcionalidades principais..."
+              value={productContext}
+              onChange={(e) => setProductContext(e.target.value)}
+              className="min-h-[80px] resize-none"
+              maxLength={500}
+            />
+            <p className="text-xs text-muted-foreground text-right">{productContext.length}/500 caracteres</p>
+          </div>
 
           {error && (
             <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
