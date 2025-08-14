@@ -6,7 +6,6 @@ import { Upload, ImageIcon, X, LinkIcon, Zap, MessageSquare } from "lucide-react
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import LoadingScreen from "@/components/loading-screen"
 import ResultsScreen from "@/components/results-screen"
 
@@ -17,10 +16,9 @@ export default function HomePage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageUrl, setImageUrl] = useState<string>("")
-  const [productContext, setProductContext] = useState<string>("") // Added product context state
+  const [productContext, setProductContext] = useState<string>("")
   const [isDragOver, setIsDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [uploadMethod, setUploadMethod] = useState<"file" | "url">("file")
 
   const validateFile = (file: File): boolean => {
     const validTypes = ["image/png", "image/jpeg", "image/jpg"]
@@ -80,7 +78,6 @@ export default function HomePage() {
 
     const files = Array.from(e.dataTransfer.files)
     if (files.length > 0) {
-      setUploadMethod("file")
       handleFileSelect(files[0])
     }
   }, [])
@@ -124,7 +121,7 @@ export default function HomePage() {
     setSelectedImage(null)
     setImagePreview(null)
     setImageUrl("")
-    setProductContext("") // Reset product context on new analysis
+    setProductContext("")
     setError(null)
   }
 
@@ -155,82 +152,57 @@ export default function HomePage() {
         <div className="bg-card rounded-xl border border-border p-6 space-y-6">
           {!imagePreview ? (
             <>
-              <Tabs
-                value={uploadMethod}
-                onValueChange={(value) => setUploadMethod(value as "file" | "url")}
-                className="w-full"
+              <div
+                className={`
+                  relative border-2 border-dashed rounded-lg p-6 text-center transition-colors
+                  ${isDragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}
+                `}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
               >
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="file" className="flex items-center gap-2">
-                    <Upload className="w-4 h-4" />
-                    Arquivo
-                  </TabsTrigger>
-                  <TabsTrigger value="url" className="flex items-center gap-2">
-                    <LinkIcon className="w-4 h-4" />
-                    URL
-                  </TabsTrigger>
-                </TabsList>
+                <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-foreground font-medium mb-1">Arraste uma imagem ou cole uma URL</p>
+                <p className="text-sm text-muted-foreground mb-4">PNG ou JPG até 5MB</p>
 
-                <TabsContent value="file" className="mt-6">
-                  <div
-                    className={`
-                      relative border-2 border-dashed rounded-lg p-8 text-center transition-colors
-                      ${isDragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}
-                    `}
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                  >
-                    <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-foreground font-medium mb-2">Arraste uma imagem aqui</p>
-                    <p className="text-sm text-muted-foreground mb-4">PNG ou JPG até 5MB</p>
+                <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
+                  <label htmlFor="file-input">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById("file-input")?.click()}
+                    >
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      Selecionar Arquivo
+                    </Button>
+                  </label>
 
-                    <label htmlFor="file-input">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => document.getElementById("file-input")?.click()}
-                      >
-                        <ImageIcon className="w-4 h-4 mr-2" />
-                        Selecionar Arquivo
-                      </Button>
-                    </label>
-                    <input
-                      id="file-input"
-                      type="file"
-                      accept="image/png,image/jpeg,image/jpg"
-                      onChange={handleFileInput}
-                      className="hidden"
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="url"
+                      placeholder="ou cole URL da imagem"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      className="w-48"
+                      size="sm"
                     />
+                    <Button onClick={handleUrlSubmit} disabled={!imageUrl.trim()} size="sm">
+                      <LinkIcon className="w-4 h-4" />
+                    </Button>
                   </div>
-                </TabsContent>
+                </div>
 
-                <TabsContent value="url" className="mt-6">
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <LinkIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-foreground font-medium mb-2">Cole a URL da imagem</p>
-                      <p className="text-sm text-muted-foreground">Link direto para PNG ou JPG</p>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Input
-                        type="url"
-                        placeholder="https://exemplo.com/imagem.jpg"
-                        value={imageUrl}
-                        onChange={(e) => setImageUrl(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button onClick={handleUrlSubmit} disabled={!imageUrl.trim()}>
-                        Carregar
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
+                <input
+                  id="file-input"
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  onChange={handleFileInput}
+                  className="hidden"
+                />
+              </div>
             </>
           ) : (
-            /* Preview simplificado */
             <div className="space-y-4">
               <div className="relative">
                 <button
