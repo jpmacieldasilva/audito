@@ -4,12 +4,10 @@ import type React from "react"
 import { useState, useCallback } from "react"
 import { Upload, ImageIcon, X, LinkIcon, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import LoadingScreen from "@/components/loading-screen"
 import ResultsScreen from "@/components/results-screen"
-import Link from "next/link"
 
 type AppState = "upload" | "loading" | "results"
 
@@ -113,10 +111,9 @@ export default function HomePage() {
     if ((selectedImage && imagePreview) || (imageUrl && imagePreview)) {
       setAppState("loading")
 
-      // Simular tempo de análise
       setTimeout(() => {
         setAppState("results")
-      }, 8000) // 8 segundos para mostrar todas as mensagens
+      }, 8000)
     }
   }
 
@@ -145,217 +142,127 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-serif font-bold text-foreground">Audito</h1>
-            </div>
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/landing">
-                <Button variant="ghost" size="sm">
-                  Sobre o Produto
-                </Button>
-              </Link>
-              <Link href="/landing#pricing">
-                <Button variant="outline" size="sm">
-                  Ver Planos
-                </Button>
-              </Link>
-              <Button size="sm" className="bg-primary hover:bg-primary/90">
-                Assinar Agora
-              </Button>
-            </nav>
-          </div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-serif font-bold text-foreground mb-2">Audito</h1>
+          <p className="text-muted-foreground">Analise suas telas com inteligência artificial</p>
         </div>
-      </header>
 
-      {/* Hero Section */}
-      <section className="py-16 md:py-24">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <Badge variant="secondary" className="mb-6 px-4 py-2">
-              <Zap className="w-4 h-4 mr-2" />
-              Powered by AI
-            </Badge>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-6 leading-tight">
-              Analise suas telas com
-              <span className="text-primary"> inteligência artificial</span>
-            </h1>
-            <p className="text-xl text-muted-foreground mb-8 leading-relaxed max-w-3xl mx-auto">
-              Seu companheiro de design para auditoria de telas. Detecte problemas de acessibilidade, usabilidade e
-              design em segundos.
-            </p>
-          </div>
+        <div className="bg-card rounded-xl border border-border p-6 space-y-6">
+          {!imagePreview ? (
+            <>
+              <Tabs
+                value={uploadMethod}
+                onValueChange={(value) => setUploadMethod(value as "file" | "url")}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="file" className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Arquivo
+                  </TabsTrigger>
+                  <TabsTrigger value="url" className="flex items-center gap-2">
+                    <LinkIcon className="w-4 h-4" />
+                    URL
+                  </TabsTrigger>
+                </TabsList>
 
-          {/* Upload Area */}
-          <div className="space-y-8">
-            {!imagePreview ? (
-              <div className="space-y-6">
-                <Tabs
-                  value={uploadMethod}
-                  onValueChange={(value) => setUploadMethod(value as "file" | "url")}
-                  className="w-full"
-                >
-                  <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
-                    <TabsTrigger value="file" className="flex items-center gap-2">
-                      <Upload className="w-4 h-4" />
-                      Upload de Arquivo
-                    </TabsTrigger>
-                    <TabsTrigger value="url" className="flex items-center gap-2">
-                      <LinkIcon className="w-4 h-4" />
-                      URL da Imagem
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="file" className="mt-8">
-                    <div
-                      className={`
-                        relative border-2 border-dashed rounded-xl p-12 md:p-16 text-center transition-all duration-200
-                        ${isDragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}
-                      `}
-                      onDrop={handleDrop}
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                    >
-                      <div className="space-y-6">
-                        <div className="flex justify-center">
-                          <div className="p-4 bg-primary/10 rounded-full">
-                            <Upload className="w-8 h-8 text-primary" strokeWidth={1} />
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <h3 className="text-xl font-serif font-semibold text-foreground">Arraste sua imagem aqui</h3>
-                          <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">
-                            Ou clique no botão abaixo para selecionar um arquivo PNG ou JPG de até 5MB
-                          </p>
-                        </div>
-
-                        <div className="pt-4">
-                          <label htmlFor="file-input">
-                            <Button
-                              type="button"
-                              className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-full font-medium transition-colors duration-200"
-                              onClick={() => document.getElementById("file-input")?.click()}
-                            >
-                              <ImageIcon className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                              Selecionar Imagem
-                            </Button>
-                          </label>
-                          <input
-                            id="file-input"
-                            type="file"
-                            accept="image/png,image/jpeg,image/jpg"
-                            onChange={handleFileInput}
-                            className="hidden"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="url" className="mt-8">
-                    <div className="max-w-md mx-auto space-y-6">
-                      <div className="space-y-3 text-center">
-                        <div className="flex justify-center">
-                          <div className="p-4 bg-primary/10 rounded-full">
-                            <LinkIcon className="w-8 h-8 text-primary" strokeWidth={1} />
-                          </div>
-                        </div>
-                        <h3 className="text-xl font-serif font-semibold text-foreground">Cole a URL da imagem</h3>
-                        <p className="text-muted-foreground leading-relaxed">
-                          Insira o link direto para uma imagem PNG ou JPG
-                        </p>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Input
-                          type="url"
-                          placeholder="https://exemplo.com/imagem.jpg"
-                          value={imageUrl}
-                          onChange={(e) => setImageUrl(e.target.value)}
-                          className="flex-1"
-                        />
-                        <Button
-                          onClick={handleUrlSubmit}
-                          disabled={!imageUrl.trim()}
-                          className="bg-primary hover:bg-primary/90"
-                        >
-                          Carregar
-                        </Button>
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            ) : (
-              /* Image Preview */
-              <div className="space-y-6">
-                <div className="relative bg-card rounded-xl p-6 border border-border">
-                  <button
-                    onClick={removeImage}
-                    className="absolute top-4 right-4 p-2 bg-background rounded-full shadow-sm hover:shadow-md transition-shadow duration-200 border border-border"
+                <TabsContent value="file" className="mt-6">
+                  <div
+                    className={`
+                      relative border-2 border-dashed rounded-lg p-8 text-center transition-colors
+                      ${isDragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}
+                    `}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
                   >
-                    <X className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
-                  </button>
+                    <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-foreground font-medium mb-2">Arraste uma imagem aqui</p>
+                    <p className="text-sm text-muted-foreground mb-4">PNG ou JPG até 5MB</p>
 
-                  <div className="text-center">
-                    <img
-                      src={imagePreview || "/placeholder.svg"}
-                      alt="Preview da imagem selecionada"
-                      className="max-w-full max-h-96 mx-auto rounded-lg shadow-sm"
+                    <label htmlFor="file-input">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => document.getElementById("file-input")?.click()}
+                      >
+                        <ImageIcon className="w-4 h-4 mr-2" />
+                        Selecionar Arquivo
+                      </Button>
+                    </label>
+                    <input
+                      id="file-input"
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg"
+                      onChange={handleFileInput}
+                      className="hidden"
                     />
-                    <div className="mt-4 space-y-1">
-                      <p className="font-medium text-foreground">{selectedImage?.name || "Imagem da URL"}</p>
-                      {selectedImage && (
-                        <p className="text-sm text-muted-foreground">
-                          {(selectedImage.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="url" className="mt-6">
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <LinkIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-foreground font-medium mb-2">Cole a URL da imagem</p>
+                      <p className="text-sm text-muted-foreground">Link direto para PNG ou JPG</p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Input
+                        type="url"
+                        placeholder="https://exemplo.com/imagem.jpg"
+                        value={imageUrl}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button onClick={handleUrlSubmit} disabled={!imageUrl.trim()}>
+                        Carregar
+                      </Button>
                     </div>
                   </div>
-                </div>
+                </TabsContent>
+              </Tabs>
+            </>
+          ) : (
+            /* Preview simplificado */
+            <div className="space-y-4">
+              <div className="relative">
+                <button
+                  onClick={removeImage}
+                  className="absolute top-2 right-2 p-1 bg-background rounded-full shadow-sm border border-border z-10"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <img
+                  src={imagePreview || "/placeholder.svg"}
+                  alt="Preview"
+                  className="w-full max-h-64 object-contain rounded-lg border border-border"
+                />
               </div>
-            )}
-
-            {/* Error Message */}
-            {error && (
-              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg max-w-md mx-auto">
-                <p className="text-destructive text-sm font-medium text-center">{error}</p>
+              <div className="text-center">
+                <p className="text-sm font-medium text-foreground">{selectedImage?.name || "Imagem da URL"}</p>
+                {selectedImage && (
+                  <p className="text-xs text-muted-foreground">{(selectedImage.size / 1024 / 1024).toFixed(2)} MB</p>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Analyze Button */}
-          <div className="text-center pt-8">
-            <Button
-              onClick={handleAnalyze}
-              disabled={!imagePreview}
-              size="lg"
-              className={`
-                px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200
-                ${
-                  imagePreview
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md"
-                    : "bg-muted text-muted-foreground cursor-not-allowed"
-                }
-              `}
-            >
-              <Zap className="w-5 h-5 mr-2" />
-              Analisar Tela
-            </Button>
+          {error && (
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-destructive text-sm text-center">{error}</p>
+            </div>
+          )}
 
-            {!imagePreview && (
-              <p className="text-sm text-muted-foreground mt-4">
-                ✓ Análise gratuita • ✓ Resultados em segundos • ✓ Sem cadastro necessário
-              </p>
-            )}
-          </div>
+          <Button onClick={handleAnalyze} disabled={!imagePreview} className="w-full" size="lg">
+            <Zap className="w-4 h-4 mr-2" />
+            Analisar Tela
+          </Button>
         </div>
-      </section>
+      </div>
     </div>
   )
 }
