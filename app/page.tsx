@@ -152,21 +152,13 @@ export default function HomePage() {
               <h1 className="text-2xl font-serif font-bold text-foreground">Audito</h1>
             </div>
             <nav className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
-                Benefits
-              </a>
-              <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
-                How it works
-              </a>
+              
+              
               {/* <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                 Pricing
               </a> */}
-              <Button variant="outline" size="sm">
-                Sign in
-              </Button>
-              <Button size="sm" className="bg-primary hover:bg-primary/90">
-                Sign up
-              </Button>
+              
+              
             </nav>
           </div>
         </div>
@@ -268,7 +260,7 @@ export default function HomePage() {
               Analyze my product
             </Button>
 
-            <p className="text-sm text-muted-foreground text-center">No credit card required</p>
+            
           </div>
         </div>
       </section>
