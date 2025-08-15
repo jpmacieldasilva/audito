@@ -2,17 +2,19 @@
 
 import type React from "react"
 import { useState, useCallback } from "react"
-import { Upload, ImageIcon, X, LinkIcon, Zap, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { CheckCircle, Zap, Shield, TrendingUp, Users, Award, Clock, Upload, X, LinkIcon } from "lucide-react"
 import LoadingScreen from "@/components/loading-screen"
 import ResultsScreen from "@/components/results-screen"
 
-type AppState = "upload" | "loading" | "results"
+type AppState = "landing" | "loading" | "results"
 
 export default function HomePage() {
-  const [appState, setAppState] = useState<AppState>("upload")
+  const [appState, setAppState] = useState<AppState>("landing")
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageUrl, setImageUrl] = useState<string>("")
@@ -117,7 +119,7 @@ export default function HomePage() {
   }
 
   const handleNewAnalysis = () => {
-    setAppState("upload")
+    setAppState("landing")
     setSelectedImage(null)
     setImagePreview(null)
     setImageUrl("")
@@ -142,55 +144,77 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-serif font-bold text-foreground mb-2">Audito</h1>
-          <p className="text-muted-foreground">Analise suas telas com inteligência artificial</p>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <h1 className="text-2xl font-serif font-bold text-foreground">Audito</h1>
+            </div>
+            <nav className="hidden md:flex items-center space-x-8">
+              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+                Benefits
+              </a>
+              <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
+                How it works
+              </a>
+              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                Pricing
+              </a>
+              <Button variant="outline" size="sm">
+                Sign in
+              </Button>
+              <Button size="sm" className="bg-primary hover:bg-primary/90">
+                Sign up
+              </Button>
+            </nav>
+          </div>
         </div>
+      </header>
 
-        <div className="bg-card rounded-xl border border-border p-6 space-y-6">
-          {!imagePreview ? (
-            <>
-              <div
-                className={`
-                  relative border-2 border-dashed rounded-lg p-6 text-center transition-colors
-                  ${isDragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}
-                `}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-              >
-                <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-foreground font-medium mb-1">Arraste uma imagem ou cole uma URL</p>
-                <p className="text-sm text-muted-foreground mb-4">PNG ou JPG até 5MB</p>
+      {/* Hero Section with Integrated Upload */}
+      <section className="py-20 md:py-32 bg-grid-pattern">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-foreground mb-6 leading-tight">
+              Transforme seu produto
+              <br />
+              <span className="text-primary italic">em experiências perfeitas</span>
+            </h1>
+            <p className="text-xl md:text-2xl text-muted-foreground mb-12 leading-relaxed max-w-3xl mx-auto">
+              Insights preciso para melhorar a usabilidade do seu produto
+            </p>
+          </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
-                  <label htmlFor="file-input">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById("file-input")?.click()}
-                    >
-                      <ImageIcon className="w-4 h-4 mr-2" />
-                      Selecionar Arquivo
-                    </Button>
-                  </label>
+          {/* Integrated Upload Area */}
+          <div className="bg-card rounded-xl border border-border p-8 space-y-6 max-w-2xl mx-auto">
+            {!imagePreview ? (
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+                <label htmlFor="file-input">
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="bg-primary hover:bg-primary/90 px-8"
+                    onClick={() => document.getElementById("file-input")?.click()}
+                  >
+                    <Upload className="w-5 h-5 mr-2" />
+                    Upload a image
+                  </Button>
+                </label>
 
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="url"
-                      placeholder="ou cole URL da imagem"
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      className="w-48"
-                      size="sm"
-                    />
-                    <Button onClick={handleUrlSubmit} disabled={!imageUrl.trim()} size="sm">
-                      <LinkIcon className="w-4 h-4" />
-                    </Button>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="url"
+                    placeholder="or paste a url"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    className="w-48 border-dashed"
+                    size="lg"
+                  />
+                  <Button onClick={handleUrlSubmit} disabled={!imageUrl.trim()} size="lg" variant="outline">
+                    <LinkIcon className="w-4 h-4" />
+                  </Button>
                 </div>
 
                 <input
@@ -201,61 +225,328 @@ export default function HomePage() {
                   className="hidden"
                 />
               </div>
-            </>
-          ) : (
-            <div className="space-y-4">
-              <div className="relative">
-                <button
-                  onClick={removeImage}
-                  className="absolute top-2 right-2 p-1 bg-background rounded-full shadow-sm border border-border z-10"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                <img
-                  src={imagePreview || "/placeholder.svg"}
-                  alt="Preview"
-                  className="w-full max-h-64 object-contain rounded-lg border border-border"
-                />
+            ) : (
+              <div className="space-y-4">
+                <div className="relative">
+                  <button
+                    onClick={removeImage}
+                    className="absolute top-2 right-2 p-1 bg-background rounded-full shadow-sm border border-border z-10"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <img
+                    src={imagePreview || "/placeholder.svg"}
+                    alt="Preview"
+                    className="w-full max-h-64 object-contain rounded-lg border border-border"
+                  />
+                </div>
               </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-foreground">{selectedImage?.name || "Imagem da URL"}</p>
-                {selectedImage && (
-                  <p className="text-xs text-muted-foreground">{(selectedImage.size / 1024 / 1024).toFixed(2)} MB</p>
-                )}
-              </div>
-            </div>
-          )}
+            )}
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-muted-foreground" />
-              <label htmlFor="product-context" className="text-sm font-medium text-foreground">
-                Contexto do produto (opcional)
-              </label>
+            <div className="space-y-3">
+              <Textarea
+                placeholder="Describe your product (opcional)"
+                value={productContext}
+                onChange={(e) => setProductContext(e.target.value)}
+                className="min-h-[80px] resize-none"
+                maxLength={500}
+              />
             </div>
-            <Textarea
-              id="product-context"
-              placeholder="Descreva seu produto: tipo de usuário, objetivo da tela, funcionalidades principais..."
-              value={productContext}
-              onChange={(e) => setProductContext(e.target.value)}
-              className="min-h-[80px] resize-none"
-              maxLength={500}
-            />
-            <p className="text-xs text-muted-foreground text-right">{productContext.length}/500 caracteres</p>
+
+            {error && (
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-destructive text-sm text-center">{error}</p>
+              </div>
+            )}
+
+            <Button
+              onClick={handleAnalyze}
+              disabled={!imagePreview}
+              className="w-full bg-primary hover:bg-primary/90"
+              size="lg"
+            >
+              <Zap className="w-5 h-5 mr-2" />
+              Analyze my product
+            </Button>
+
+            <p className="text-sm text-muted-foreground text-center">No credit card required</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-serif font-bold text-foreground mb-6">
+              Recursos que fazem a diferença
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Cada funcionalidade foi pensada para acelerar seu workflow e melhorar a qualidade dos seus designs.
+            </p>
           </div>
 
-          {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <p className="text-destructive text-sm text-center">{error}</p>
-            </div>
-          )}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card className="border-border hover:shadow-lg transition-shadow">
+              <CardContent className="p-8">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                  <Shield className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-serif font-semibold mb-4">Análise de Acessibilidade</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Detecta problemas de contraste, hierarquia visual e compatibilidade com leitores de tela
+                  automaticamente.
+                </p>
+              </CardContent>
+            </Card>
 
-          <Button onClick={handleAnalyze} disabled={!imagePreview} className="w-full" size="lg">
-            <Zap className="w-4 h-4 mr-2" />
-            Analisar Tela
-          </Button>
+            <Card className="border-border hover:shadow-lg transition-shadow">
+              <CardContent className="p-8">
+                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-6">
+                  <TrendingUp className="w-6 h-6 text-accent" />
+                </div>
+                <h3 className="text-xl font-serif font-semibold mb-4">Métricas de Usabilidade</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Avalia espaçamentos, alinhamentos e fluxo visual para garantir uma experiência intuitiva.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border hover:shadow-lg transition-shadow">
+              <CardContent className="p-8">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                  <Zap className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-serif font-semibold mb-4">Sugestões Inteligentes</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Receba recomendações específicas e acionáveis para melhorar cada aspecto da sua interface.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border hover:shadow-lg transition-shadow">
+              <CardContent className="p-8">
+                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-6">
+                  <Clock className="w-6 h-6 text-accent" />
+                </div>
+                <h3 className="text-xl font-serif font-semibold mb-4">Análise Instantânea</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Resultados em segundos, não em horas. Acelere seu processo de design e iteração.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border hover:shadow-lg transition-shadow">
+              <CardContent className="p-8">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                  <Users className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-serif font-semibold mb-4">Colaboração em Equipe</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Compartilhe análises e insights com sua equipe para manter todos alinhados.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border hover:shadow-lg transition-shadow">
+              <CardContent className="p-8">
+                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-6">
+                  <Award className="w-6 h-6 text-accent" />
+                </div>
+                <h3 className="text-xl font-serif font-semibold mb-4">Relatórios Detalhados</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Exporte relatórios completos para apresentar melhorias aos stakeholders.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="py-20 bg-card">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-serif font-bold text-foreground mb-6">
+              Planos para cada necessidade
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Comece grátis e escale conforme sua equipe cresce.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <Card className="border-border">
+              <CardContent className="p-8">
+                <h3 className="text-2xl font-serif font-bold mb-2">Starter</h3>
+                <p className="text-muted-foreground mb-6">Para designers individuais</p>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">Grátis</span>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
+                    <span>5 análises por mês</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
+                    <span>Relatórios básicos</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
+                    <span>Suporte por email</span>
+                  </li>
+                </ul>
+                <Button variant="outline" className="w-full bg-transparent">
+                  Começar Grátis
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-primary shadow-lg relative">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <Badge className="bg-primary text-primary-foreground px-4 py-1">Mais Popular</Badge>
+              </div>
+              <CardContent className="p-8">
+                <h3 className="text-2xl font-serif font-bold mb-2">Professional</h3>
+                <p className="text-muted-foreground mb-6">Para equipes pequenas</p>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">R$ 49</span>
+                  <span className="text-muted-foreground">/mês</span>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
+                    <span>Análises ilimitadas</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
+                    <span>Relatórios avançados</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
+                    <span>Colaboração em equipe</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
+                    <span>Suporte prioritário</span>
+                  </li>
+                </ul>
+                <Button className="w-full bg-primary hover:bg-primary/90">Assinar Agora</Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border">
+              <CardContent className="p-8">
+                <h3 className="text-2xl font-serif font-bold mb-2">Enterprise</h3>
+                <p className="text-muted-foreground mb-6">Para grandes organizações</p>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">R$ 149</span>
+                  <span className="text-muted-foreground">/mês</span>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
+                    <span>Tudo do Professional</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
+                    <span>API personalizada</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
+                    <span>Integrações customizadas</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
+                    <span>Suporte dedicado</span>
+                  </li>
+                </ul>
+                <Button variant="outline" className="w-full bg-transparent">
+                  Falar com Vendas
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 bg-background border-t border-border">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="text-xl font-serif font-bold mb-4">Audito</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Seu companheiro de design para auditoria de telas.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Produto</h4>
+              <ul className="space-y-2 text-muted-foreground">
+                <li>
+                  <a href="#" className="hover:text-foreground transition-colors">
+                    Recursos
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-foreground transition-colors">
+                    Preços
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-foreground transition-colors">
+                    API
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Empresa</h4>
+              <ul className="space-y-2 text-muted-foreground">
+                <li>
+                  <a href="#" className="hover:text-foreground transition-colors">
+                    Sobre
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-foreground transition-colors">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-foreground transition-colors">
+                    Carreiras
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Suporte</h4>
+              <ul className="space-y-2 text-muted-foreground">
+                <li>
+                  <a href="#" className="hover:text-foreground transition-colors">
+                    Ajuda
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-foreground transition-colors">
+                    Contato
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-foreground transition-colors">
+                    Status
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
+            <p>&copy; 2024 Audito. Todos os direitos reservados.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

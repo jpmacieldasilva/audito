@@ -146,4 +146,11 @@
       transform: translateY(0);
     }
   }
+
+  /* Adicionando grid pattern para o background da hero section */
+  .bg-grid-pattern {
+    background-image: linear-gradient(to right, oklch(0.9 0 0 / 0.3) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(0.9 0 0 / 0.3) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
 }
