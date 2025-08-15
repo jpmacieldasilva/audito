@@ -95,9 +95,9 @@ export default function ResultsScreen({
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Left Column - Browser Mockup */}
-          <div className="lg:sticky lg:top-6 lg:self-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Browser Mockup (2/3 width) */}
+          <div className="lg:col-span-2 lg:sticky lg:top-6 lg:self-start">
             <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
               {/* Browser Header */}
               <div className="bg-primary px-4 py-3 flex items-center gap-2">
@@ -112,10 +112,10 @@ export default function ResultsScreen({
               </div>
 
               {/* Image Container */}
-              <div className="p-6 bg-gray-50">
+              <div className="p-8 bg-gray-50 min-h-[600px] flex items-center justify-center">
                 <div
-                  className={`mx-auto bg-white rounded-lg shadow-sm overflow-hidden ${
-                    isMobileImage() ? "max-w-sm" : "w-full"
+                  className={`bg-white rounded-lg shadow-sm overflow-hidden ${
+                    isMobileImage() ? "max-w-md" : "w-full max-w-4xl"
                   }`}
                 >
                   <img
@@ -128,45 +128,45 @@ export default function ResultsScreen({
             </div>
           </div>
 
-          {/* Right Column - Analysis Results */}
-          <div className="space-y-8">
+          {/* Right Column - Analysis Results (1/3 width) */}
+          <div className="lg:col-span-1 space-y-6">
             {issues.map((issue, index) => (
-              <div key={issue.id} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="space-y-4">
+              <div key={issue.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                <div className="space-y-3">
                   {/* Problem Header */}
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
-                      <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-100 text-gray-700 rounded-full font-semibold text-sm">
+                      <span className="inline-flex items-center justify-center w-6 h-6 bg-gray-100 text-gray-700 rounded-full font-semibold text-sm">
                         {index + 1}
                       </span>
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 text-lg mb-2">{issue.title}</h3>
-                      <p className="text-gray-700 leading-relaxed mb-4">{issue.description}</p>
+                      <h3 className="font-semibold text-gray-900 text-base mb-2">{issue.title}</h3>
+                      <p className="text-gray-700 text-sm leading-relaxed mb-3">{issue.description}</p>
                     </div>
                   </div>
 
                   {/* Impact Section */}
-                  <div className="ml-12">
-                    <h4 className="font-semibold text-gray-900 mb-2">Impacto</h4>
-                    <p className="text-gray-700 leading-relaxed mb-4">
+                  <div className="ml-9">
+                    <h4 className="font-semibold text-gray-900 text-sm mb-2">Impacto</h4>
+                    <p className="text-gray-700 text-sm leading-relaxed mb-3">
                       Em uma tela de monitoramento, a principal ação não é necessariamente "finalizar". Isso pode levar
                       a cliques acidentais que interrompem a produção.
                     </p>
 
                     {/* Impact Badge */}
-                    <div className="mb-4">
+                    <div className="mb-3">
                       <span
-                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${getImpactColor(issue.impact)}`}
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getImpactColor(issue.impact)}`}
                       >
                         {issue.impact}
                       </span>
                     </div>
 
                     {/* Suggestion Section */}
-                    <h4 className="font-semibold text-gray-900 mb-2">Sugestão</h4>
-                    <div className="space-y-2">
-                      <p className="text-gray-700 leading-relaxed">• {issue.suggestion}</p>
+                    <h4 className="font-semibold text-gray-900 text-sm mb-2">Sugestão</h4>
+                    <div className="space-y-1">
+                      <p className="text-gray-700 text-sm leading-relaxed">• {issue.suggestion}</p>
                     </div>
                   </div>
                 </div>
@@ -174,12 +174,12 @@ export default function ResultsScreen({
             ))}
 
             {/* New Analysis Button */}
-            <div className="pt-8">
+            <div className="pt-4">
               <Button
                 onClick={onNewAnalysis}
-                className="w-full bg-primary text-white hover:bg-primary/90 px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200"
+                className="w-full bg-primary text-white hover:bg-primary/90 px-6 py-3 rounded-lg font-semibold transition-all duration-200"
               >
-                <ArrowLeft className="w-5 h-5 mr-2" strokeWidth={1.5} />
+                <ArrowLeft className="w-4 h-4 mr-2" strokeWidth={1.5} />
                 Nova Análise
               </Button>
             </div>
