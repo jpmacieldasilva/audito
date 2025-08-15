@@ -76,18 +76,11 @@ export default function ResultsScreen({
       {/* Header */}
       <header className="bg-primary text-white">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-serif">Audito</div>
+          <div className="flex items-center justify-between text-center font-bold">
+            <div className="text-2xl font-serif text-center">Audito</div>
             <div className="flex gap-3">
-              <Button variant="outline" className="bg-white text-primary border-white hover:bg-gray-50">
-                Sign up
-              </Button>
-              <Button
-                variant="outline"
-                className="border-white text-white hover:bg-white hover:text-primary bg-transparent"
-              >
-                Sign in
-              </Button>
+              
+              
             </div>
           </div>
         </div>
