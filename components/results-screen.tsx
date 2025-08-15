@@ -26,23 +26,24 @@ const mockIssues: Issue[] = [
     description: 'O botão "Finalizar ordem" é a ação mais proeminente na tela (botão primário).',
     impact: "Alto",
     suggestion:
-      'Reavaliar a Hierarquia do Botão: Considere tornar "Finalizar ordem" um botão secundário (ex: com contorno, sem preenchimento sólido) para reduzir sua proeminência. Adicionar Confirmação: Ao clicar em "Finalizar ordem", exiba um modal de confirmação ("Você tem certeza que deseja finalizar a Ordem 00000000? Esta ação não pode ser desfeita.") para prevenir erros.',
+      'Reavaliar a Hierarquia do Botão: Considere tornar "Finalizar ordem" um botão secundário (ex: com contorno, sem preenchimento sólido) para reduzir sua proeminência.',
   },
   {
     id: "2",
     title: "Problema",
-    description: 'O botão "Finalizar ordem" é a ação mais proeminente na tela (botão primário).',
+    description:
+      "Contraste insuficiente entre texto secundário e fundo, dificultando a leitura para usuários com deficiência visual.",
     impact: "Médio",
     suggestion:
-      'Reavaliar a Hierarquia do Botão: Considere tornar "Finalizar ordem" um botão secundário (ex: com contorno, sem preenchimento sólido) para reduzir sua proeminência.',
+      "Aumentar Contraste: Utilize cores mais escuras para textos secundários, garantindo uma razão de contraste mínima de 4.5:1 conforme WCAG 2.1.",
   },
   {
     id: "3",
     title: "Problema",
-    description: 'O botão "Finalizar ordem" é a ação mais proeminente na tela (botão primário).',
+    description: "Espaçamento inconsistente entre elementos da interface, criando hierarquia visual confusa.",
     impact: "Baixo",
     suggestion:
-      'Reavaliar a Hierarquia do Botão: Considere tornar "Finalizar ordem" um botão secundário (ex: com contorno, sem preenchimento sólido) para reduzir sua proeminência.',
+      "Padronizar Espaçamentos: Implemente um sistema de grid consistente com espaçamentos múltiplos de 8px para melhor organização visual.",
   },
 ]
 
@@ -78,10 +79,7 @@ export default function ResultsScreen({
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between text-center font-bold">
             <div className="text-2xl font-serif text-center">Audito</div>
-            <div className="flex gap-3">
-              
-              
-            </div>
+            <div className="flex gap-3"></div>
           </div>
         </div>
       </header>
@@ -99,9 +97,7 @@ export default function ResultsScreen({
                   <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
                   <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 </div>
-                <div className="flex-1 mx-4">
-                  
-                </div>
+                <div className="flex-1 mx-4"></div>
               </div>
 
               {/* Image Container */}
@@ -143,8 +139,12 @@ export default function ResultsScreen({
                   <div className="ml-9">
                     <h4 className="font-semibold text-gray-900 text-sm mb-2">Impacto</h4>
                     <p className="text-gray-700 text-sm leading-relaxed mb-3">
-                      Em uma tela de monitoramento, a principal ação não é necessariamente "finalizar". Isso pode levar
-                      a cliques acidentais que interrompem a produção.
+                      {index === 0 &&
+                        "Em uma tela de monitoramento, a principal ação não é necessariamente 'finalizar'. Isso pode levar a cliques acidentais que interrompem a produção."}
+                      {index === 1 &&
+                        "Usuários com deficiência visual ou em ambientes com pouca luz podem ter dificuldade para ler informações importantes, impactando a usabilidade."}
+                      {index === 2 &&
+                        "A falta de consistência visual pode confundir usuários e reduzir a eficiência na navegação e compreensão da interface."}
                     </p>
 
                     {/* Impact Badge */}
@@ -159,7 +159,21 @@ export default function ResultsScreen({
                     {/* Suggestion Section */}
                     <h4 className="font-semibold text-gray-900 text-sm mb-2">Sugestão</h4>
                     <div className="space-y-1">
-                      <p className="text-gray-700 text-sm leading-relaxed">• {issue.suggestion}</p>
+                      {index === 0 && (
+                        <>
+                          <p className="text-gray-700 text-sm leading-relaxed">
+                            • Reavaliar a Hierarquia do Botão: Considere tornar 'Finalizar ordem' um botão secundário
+                            (ex: com contorno, sem preenchimento sólido) para reduzir sua proeminência.
+                          </p>
+                          <p className="text-gray-700 text-sm leading-relaxed">
+                            • Adicionar Confirmação: Ao clicar em 'Finalizar ordem', exiba um modal de confirmação
+                            ('Você tem certeza que deseja finalizar a Ordem 00000000? Esta ação não pode ser desfeita.')
+                            para prevenir erros.
+                          </p>
+                        </>
+                      )}
+                      {index === 1 && <p className="text-gray-700 text-sm leading-relaxed">• {issue.suggestion}</p>}
+                      {index === 2 && <p className="text-gray-700 text-sm leading-relaxed">• {issue.suggestion}</p>}
                     </div>
                   </div>
                 </div>
