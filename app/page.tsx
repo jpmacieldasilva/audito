@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,6 +11,28 @@ import ResultsScreen from "@/components/results-screen"
 
 type AppState = "landing" | "loading" | "results"
 
+// Tipos para a API
+interface Recommendation {
+  id: string
+  title: string
+  problem: string
+  impact: string
+  suggestion: string
+  category: string
+}
+
+interface AnalysisResult {
+  success: boolean
+  overall_assessment: string
+  user_context: string
+  recommendations: Recommendation[]
+  image_info?: any
+  source_url?: string
+  screenshot_data?: string
+  analysis_timestamp?: number
+  error?: string
+}
+
 export default function HomePage() {
   const [appState, setAppState] = useState<AppState>("landing")
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
@@ -20,6 +41,13 @@ export default function HomePage() {
   const [productContext, setProductContext] = useState<string>("")
   const [isDragOver, setIsDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
+  
+  // Ref para o input file
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Configuração da API
+  const API_BASE_URL = typeof window !== 'undefined' && (window as any).ENV?.API_URL ? (window as any).ENV.API_URL : "http://localhost:8000"
 
   const validateFile = (file: File): boolean => {
     const validTypes = ["image/png", "image/jpeg", "image/jpg"]
@@ -42,10 +70,7 @@ export default function HomePage() {
   const validateUrl = (url: string): boolean => {
     try {
       new URL(url)
-      if (!url.match(/\.(jpg|jpeg|png)$/i)) {
-        setError("URL deve apontar para uma imagem PNG ou JPG.")
-        return false
-      }
+      // Aceita qualquer URL válida (imagem direta ou página web)
       setError(null)
       return true
     } catch {
@@ -69,7 +94,35 @@ export default function HomePage() {
   const handleUrlSubmit = () => {
     if (validateUrl(imageUrl)) {
       setSelectedImage(null)
-      setImagePreview(imageUrl)
+      // Para URLs de imagem direta, mostrar preview. Para páginas web, usar placeholder
+      if (imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)) {
+        setImagePreview(imageUrl)
+      } else {
+        // Para páginas web, usar um placeholder
+        setImagePreview("/placeholder.svg")
+      }
+    }
+  }
+
+  // Função para validar URL automaticamente ao digitar
+  const handleUrlChange = (url: string) => {
+    setImageUrl(url)
+    if (url.trim()) {
+      if (validateUrl(url)) {
+        setSelectedImage(null)
+        // Para URLs de imagem direta, mostrar preview. Para páginas web, usar placeholder
+        if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)) {
+          setImagePreview(url)
+        } else {
+          // Para páginas web, usar um placeholder
+          setImagePreview("/placeholder.svg")
+        }
+      } else {
+        setImagePreview(null)
+      }
+    } else {
+      setImagePreview(null)
+      setError(null)
     }
   }
 
@@ -107,13 +160,92 @@ export default function HomePage() {
     setError(null)
   }
 
-  const handleAnalyze = () => {
+  // Função para analisar imagem via upload
+  const analyzeUploadedImage = async (file: File, context: string) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    if (context) {
+      formData.append('product_context', context)
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/analyze/upload`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Erro na análise')
+      }
+
+      const result: AnalysisResult = await response.json()
+      return result
+    } catch (error) {
+      console.error('Erro na análise:', error)
+      throw error
+    }
+  }
+
+  // Função para analisar imagem via URL
+  const analyzeImageFromUrl = async (url: string, context: string) => {
+    try {
+      console.log('Enviando requisição para análise de URL:', url)
+      const response = await fetch(`${API_BASE_URL}/api/analyze/url`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: url,
+          product_context: context
+        }),
+      })
+
+      console.log('Resposta da API:', response.status, response.statusText)
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Erro na resposta da API:', response.status, errorData)
+        throw new Error(errorData.error || errorData.detail || `Erro na análise (${response.status})`)
+      }
+
+      const result: AnalysisResult = await response.json()
+      console.log('Análise concluída com sucesso')
+      return result
+    } catch (error) {
+      console.error('Erro na análise:', error)
+      throw error
+    }
+  }
+
+  const handleAnalyze = async () => {
     if ((selectedImage && imagePreview) || (imageUrl && imagePreview)) {
       setAppState("loading")
+      setError(null)
 
-      setTimeout(() => {
-        setAppState("results")
-      }, 8000)
+      try {
+        let result: AnalysisResult
+
+        if (selectedImage) {
+          // Análise de arquivo enviado
+          result = await analyzeUploadedImage(selectedImage, productContext)
+        } else {
+          // Análise de URL
+          result = await analyzeImageFromUrl(imageUrl, productContext)
+        }
+
+        if (result.success) {
+          setAnalysisResult(result)
+          setAppState("results")
+        } else {
+          throw new Error(result.error || 'Análise falhou')
+        }
+      } catch (error) {
+        console.error('Erro na análise:', error)
+        setError(error instanceof Error ? error.message : 'Erro desconhecido na análise')
+        setAppState("landing")
+      }
     }
   }
 
@@ -124,19 +256,26 @@ export default function HomePage() {
     setImageUrl("")
     setProductContext("")
     setError(null)
+    setAnalysisResult(null)
   }
 
   if (appState === "loading" && imagePreview) {
-    return <LoadingScreen imagePreview={imagePreview} imageName={selectedImage?.name || "Imagem da URL"} />
+    const loadingName = selectedImage?.name || 
+      (imageUrl && !imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ? "Capturando página..." : "Imagem da URL")
+    return <LoadingScreen imagePreview={imagePreview} imageName={loadingName} />
   }
 
-  if (appState === "results" && imagePreview) {
+  if (appState === "results" && imagePreview && analysisResult) {
+    // Use screenshot data if available, otherwise use the original preview
+    const displayImage = analysisResult.screenshot_data || imagePreview
+    
     return (
       <ResultsScreen
-        imagePreview={imagePreview}
-        imageName={selectedImage?.name || "Imagem da URL"}
-        score={72}
-        issues={[]}
+        imagePreview={displayImage}
+        imageName={selectedImage?.name || 
+          (imageUrl && !imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ? "Screenshot da página" : "Imagem da URL")}
+        userContext={analysisResult.user_context}
+        issues={analysisResult.recommendations}
         onNewAnalysis={handleNewAnalysis}
       />
     )
@@ -182,26 +321,23 @@ export default function HomePage() {
           <div className="bg-card rounded-xl border border-border p-8 space-y-6 max-w-2xl mx-auto">
             {!imagePreview ? (
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-                <label htmlFor="file-input">
-                  <Button
-                    type="button"
-                    size="lg"
-                    className="bg-primary hover:bg-primary/90 px-8"
-                    onClick={() => document.getElementById("file-input")?.click()}
-                  >
-                    <Upload className="w-5 h-5 mr-2" />
-                    Upload a image
-                  </Button>
-                </label>
+                <Button
+                  type="button"
+                  size="lg"
+                  className="bg-primary hover:bg-primary/90 px-8"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="w-5 h-5 mr-2" />
+                  Upload a image
+                </Button>
 
                 <div className="flex items-center gap-2">
                   <Input
                     type="url"
-                    placeholder="or paste a url"
+                    placeholder="ou cole uma URL"
                     value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
+                    onChange={(e) => handleUrlChange(e.target.value)}
                     className="w-48 border-dashed"
-                    size="lg"
                   />
                   <Button onClick={handleUrlSubmit} disabled={!imageUrl.trim()} size="lg" variant="outline">
                     <LinkIcon className="w-4 h-4" />
@@ -209,7 +345,7 @@ export default function HomePage() {
                 </div>
 
                 <input
-                  id="file-input"
+                  ref={fileInputRef}
                   type="file"
                   accept="image/png,image/jpeg,image/jpg"
                   onChange={handleFileInput}
@@ -225,11 +361,21 @@ export default function HomePage() {
                   >
                     <X className="w-4 h-4" />
                   </button>
-                  <img
-                    src={imagePreview || "/placeholder.svg"}
-                    alt="Preview"
-                    className="w-full max-h-64 object-contain rounded-lg border border-border"
-                  />
+                  {imageUrl && !imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ? (
+                    <div className="w-full max-h-64 flex items-center justify-center rounded-lg border border-border bg-muted p-8">
+                      <div className="text-center">
+                        <LinkIcon className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                        <p className="text-sm font-medium">Página web será capturada</p>
+                        <p className="text-xs text-muted-foreground mt-1">{imageUrl}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={imagePreview || "/placeholder.svg"}
+                      alt="Preview"
+                      className="w-full max-h-64 object-contain rounded-lg border border-border"
+                    />
+                  )}
                 </div>
               </div>
             )}
