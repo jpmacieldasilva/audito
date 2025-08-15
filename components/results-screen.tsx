@@ -53,25 +53,7 @@ export default function ResultsScreen({
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-primary text-white">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-serif">Audito</div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="bg-white text-primary hover:bg-gray-50 px-6 py-2 rounded-lg font-medium"
-              >
-                Sign up
-              </Button>
-              <Button
-                variant="outline"
-                className="border-white text-white hover:bg-white/10 px-6 py-2 rounded-lg font-medium bg-transparent"
-              >
-                Sign in
-              </Button>
-            </div>
-          </div>
-        </div>
+        
       </header>
 
       {/* Main Content */}
@@ -86,18 +68,8 @@ export default function ResultsScreen({
                   <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
                   <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 </div>
-                <div className="flex-1 mx-4 bg-white/20 rounded px-3 py-1 text-sm text-white/80">
-                  / support@global.pay
-                </div>
-                <div className="text-sm text-white/80 flex items-center gap-4">
-                  <span>Currency</span>
-                  <span>Data</span>
-                  <span>Web App</span>
-                  <span>Payment</span>
-                  <span>🌐 En</span>
-                  <span>Login</span>
-                  <span>Try Demo →</span>
-                </div>
+                
+                
               </div>
 
               <div className="p-0 bg-white min-h-[700px]">
