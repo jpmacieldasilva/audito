@@ -4,10 +4,9 @@ import type React from "react"
 import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { CheckCircle, Zap, Shield, TrendingUp, Users, Award, Clock, Upload, X, LinkIcon } from "lucide-react"
+import { Zap, Shield, TrendingUp, Users, Award, Clock, Upload, X, LinkIcon } from "lucide-react"
 import LoadingScreen from "@/components/loading-screen"
 import ResultsScreen from "@/components/results-screen"
 
@@ -159,9 +158,9 @@ export default function HomePage() {
               <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
                 How it works
               </a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+              {/* <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                 Pricing
-              </a>
+              </a> */}
               <Button variant="outline" size="sm">
                 Sign in
               </Button>
@@ -357,114 +356,6 @@ export default function HomePage() {
                 <p className="text-muted-foreground leading-relaxed">
                   Exporte relatórios completos para apresentar melhorias aos stakeholders.
                 </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="py-20 bg-card">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-serif font-bold text-foreground mb-6">
-              Planos para cada necessidade
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Comece grátis e escale conforme sua equipe cresce.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <Card className="border-border">
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-serif font-bold mb-2">Starter</h3>
-                <p className="text-muted-foreground mb-6">Para designers individuais</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold">Grátis</span>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
-                    <span>5 análises por mês</span>
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
-                    <span>Relatórios básicos</span>
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
-                    <span>Suporte por email</span>
-                  </li>
-                </ul>
-                <Button variant="outline" className="w-full bg-transparent">
-                  Começar Grátis
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="border-primary shadow-lg relative">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-primary text-primary-foreground px-4 py-1">Mais Popular</Badge>
-              </div>
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-serif font-bold mb-2">Professional</h3>
-                <p className="text-muted-foreground mb-6">Para equipes pequenas</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold">R$ 49</span>
-                  <span className="text-muted-foreground">/mês</span>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
-                    <span>Análises ilimitadas</span>
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
-                    <span>Relatórios avançados</span>
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
-                    <span>Colaboração em equipe</span>
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
-                    <span>Suporte prioritário</span>
-                  </li>
-                </ul>
-                <Button className="w-full bg-primary hover:bg-primary/90">Assinar Agora</Button>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border">
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-serif font-bold mb-2">Enterprise</h3>
-                <p className="text-muted-foreground mb-6">Para grandes organizações</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold">R$ 149</span>
-                  <span className="text-muted-foreground">/mês</span>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
-                    <span>Tudo do Professional</span>
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
-                    <span>API personalizada</span>
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
-                    <span>Integrações customizadas</span>
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-primary mr-3" />
-                    <span>Suporte dedicado</span>
-                  </li>
-                </ul>
-                <Button variant="outline" className="w-full bg-transparent">
-                  Falar com Vendas
-                </Button>
               </CardContent>
             </Card>
           </div>
