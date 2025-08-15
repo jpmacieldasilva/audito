@@ -107,7 +107,7 @@ export default function ResultsScreen({
               {/* Image Container */}
               <div className="p-8 bg-gray-50 min-h-[600px] flex items-center justify-center px-[0] py-[0]">
                 <div
-                  className={`bg-white rounded-lg shadow-sm overflow-hidden ${
+                  className={`bg-white shadow-sm overflow-hidden rounded-none border-black ${
                     isMobileImage() ? "max-w-md" : "w-full max-w-4xl"
                   }`}
                 >
