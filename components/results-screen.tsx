@@ -107,12 +107,12 @@ export default function ResultsScreen({
                   <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 </div>
                 <div className="flex-1 mx-4">
-                  <div className="bg-white/20 rounded px-3 py-1 text-white/80 text-sm">support@global.pay</div>
+                  
                 </div>
               </div>
 
               {/* Image Container */}
-              <div className="p-8 bg-gray-50 min-h-[600px] flex items-center justify-center">
+              <div className="p-8 bg-gray-50 min-h-[600px] flex items-center justify-center px-[0] py-[0]">
                 <div
                   className={`bg-white rounded-lg shadow-sm overflow-hidden ${
                     isMobileImage() ? "max-w-md" : "w-full max-w-4xl"
