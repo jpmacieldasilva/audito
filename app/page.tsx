@@ -1,19 +1,23 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useCallback } from "react"
-import { Upload, ImageIcon, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Zap, Shield, TrendingUp, Users, Award, Clock, Upload, X, LinkIcon } from "lucide-react"
 import LoadingScreen from "@/components/loading-screen"
 import ResultsScreen from "@/components/results-screen"
 
-type AppState = "upload" | "loading" | "results"
+type AppState = "landing" | "loading" | "results"
 
 export default function HomePage() {
-  const [appState, setAppState] = useState<AppState>("upload")
+  const [appState, setAppState] = useState<AppState>("landing")
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageUrl, setImageUrl] = useState<string>("")
+  const [productContext, setProductContext] = useState<string>("")
   const [isDragOver, setIsDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,14 +39,37 @@ export default function HomePage() {
     return true
   }
 
+  const validateUrl = (url: string): boolean => {
+    try {
+      new URL(url)
+      if (!url.match(/\.(jpg|jpeg|png)$/i)) {
+        setError("URL deve apontar para uma imagem PNG ou JPG.")
+        return false
+      }
+      setError(null)
+      return true
+    } catch {
+      setError("URL inválida. Verifique o formato.")
+      return false
+    }
+  }
+
   const handleFileSelect = (file: File) => {
     if (validateFile(file)) {
       setSelectedImage(file)
+      setImageUrl("")
       const reader = new FileReader()
       reader.onload = (e) => {
         setImagePreview(e.target?.result as string)
       }
       reader.readAsDataURL(file)
+    }
+  }
+
+  const handleUrlSubmit = () => {
+    if (validateUrl(imageUrl)) {
+      setSelectedImage(null)
+      setImagePreview(imageUrl)
     }
   }
 
@@ -76,36 +103,38 @@ export default function HomePage() {
   const removeImage = () => {
     setSelectedImage(null)
     setImagePreview(null)
+    setImageUrl("")
     setError(null)
   }
 
   const handleAnalyze = () => {
-    if (selectedImage && imagePreview) {
+    if ((selectedImage && imagePreview) || (imageUrl && imagePreview)) {
       setAppState("loading")
 
-      // Simular tempo de análise
       setTimeout(() => {
         setAppState("results")
-      }, 8000) // 8 segundos para mostrar todas as mensagens
+      }, 8000)
     }
   }
 
   const handleNewAnalysis = () => {
-    setAppState("upload")
+    setAppState("landing")
     setSelectedImage(null)
     setImagePreview(null)
+    setImageUrl("")
+    setProductContext("")
     setError(null)
   }
 
-  if (appState === "loading" && selectedImage && imagePreview) {
-    return <LoadingScreen imagePreview={imagePreview} imageName={selectedImage.name} />
+  if (appState === "loading" && imagePreview) {
+    return <LoadingScreen imagePreview={imagePreview} imageName={selectedImage?.name || "Imagem da URL"} />
   }
 
-  if (appState === "results" && selectedImage && imagePreview) {
+  if (appState === "results" && imagePreview) {
     return (
       <ResultsScreen
         imagePreview={imagePreview}
-        imageName={selectedImage.name}
+        imageName={selectedImage?.name || "Imagem da URL"}
         score={72}
         issues={[]}
         onNewAnalysis={handleNewAnalysis}
@@ -114,124 +143,140 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 bg-white border-b border-gray-100 z-10">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-black mb-3 leading-tight">Audito</h1>
-            <p className="text-base md:text-lg text-gray-600 font-medium">
-              Seu companheiro de design para auditoria de telas
-            </p>
+      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <h1 className="text-2xl font-serif font-bold text-foreground">Audito</h1>
+            </div>
+            <nav className="hidden md:flex items-center space-x-8">
+              
+              
+              {/* <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                Pricing
+              </a> */}
+              
+              
+            </nav>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 py-16 md:py-24">
-        <div className="space-y-12">
-          {/* Upload Area */}
-          <div className="space-y-8">
+      {/* Hero Section with Integrated Upload */}
+      <section className="py-20 md:py-32 bg-grid-pattern">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-foreground mb-6 leading-tight">
+              Transforme seu produto
+              <br />
+              <span className="text-primary italic">em experiências perfeitas</span>
+            </h1>
+            <p className="text-xl md:text-2xl text-muted-foreground mb-12 leading-relaxed max-w-3xl mx-auto">
+              Insights preciso para melhorar a usabilidade do seu produto
+            </p>
+          </div>
+
+          {/* Integrated Upload Area */}
+          <div className="bg-card rounded-xl border border-border p-8 space-y-6 max-w-2xl mx-auto">
             {!imagePreview ? (
-              <div
-                className={`
-                  relative border-2 border-dashed rounded-xl p-12 md:p-16 text-center transition-all duration-200
-                  ${isDragOver ? "border-black bg-gray-50" : "border-gray-300 hover:border-gray-400"}
-                `}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-              >
-                <div className="space-y-6">
-                  <div className="flex justify-center">
-                    <div className="p-4 bg-gray-100 rounded-full">
-                      <Upload className="w-8 h-8 text-gray-600" strokeWidth={1} />
-                    </div>
-                  </div>
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+                <label htmlFor="file-input">
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="bg-primary hover:bg-primary/90 px-8"
+                    onClick={() => document.getElementById("file-input")?.click()}
+                  >
+                    <Upload className="w-5 h-5 mr-2" />
+                    Upload a image
+                  </Button>
+                </label>
 
-                  <div className="space-y-3">
-                    <h3 className="text-xl font-semibold text-black">Arraste sua imagem aqui</h3>
-                    <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
-                      Ou clique no botão abaixo para selecionar um arquivo PNG ou JPG de até 5MB
-                    </p>
-                  </div>
-
-                  <div className="pt-4">
-                    <label htmlFor="file-input">
-                      <Button
-                        type="button"
-                        className="bg-black text-white hover:bg-gray-800 px-6 py-3 rounded-full font-medium transition-colors duration-200"
-                        onClick={() => document.getElementById("file-input")?.click()}
-                      >
-                        <ImageIcon className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                        Selecionar Imagem
-                      </Button>
-                    </label>
-                    <input
-                      id="file-input"
-                      type="file"
-                      accept="image/png,image/jpeg,image/jpg"
-                      onChange={handleFileInput}
-                      className="hidden"
-                    />
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="url"
+                    placeholder="or paste a url"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    className="w-48 border-dashed"
+                    size="lg"
+                  />
+                  <Button onClick={handleUrlSubmit} disabled={!imageUrl.trim()} size="lg" variant="outline">
+                    <LinkIcon className="w-4 h-4" />
+                  </Button>
                 </div>
+
+                <input
+                  id="file-input"
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  onChange={handleFileInput}
+                  className="hidden"
+                />
               </div>
             ) : (
-              /* Image Preview */
-              <div className="space-y-6">
-                <div className="relative bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <div className="space-y-4">
+                <div className="relative">
                   <button
                     onClick={removeImage}
-                    className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-200"
+                    className="absolute top-2 right-2 p-1 bg-background rounded-full shadow-sm border border-border z-10"
                   >
-                    <X className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+                    <X className="w-4 h-4" />
                   </button>
-
-                  <div className="text-center">
-                    <img
-                      src={imagePreview || "/placeholder.svg"}
-                      alt="Preview da imagem selecionada"
-                      className="max-w-full max-h-96 mx-auto rounded-lg shadow-sm"
-                    />
-                    <div className="mt-4 space-y-1">
-                      <p className="font-medium text-black">{selectedImage?.name}</p>
-                      <p className="text-sm text-gray-600">
-                        {selectedImage && (selectedImage.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                  </div>
+                  <img
+                    src={imagePreview || "/placeholder.svg"}
+                    alt="Preview"
+                    className="w-full max-h-64 object-contain rounded-lg border border-border"
+                  />
                 </div>
               </div>
             )}
 
-            {/* Error Message */}
+            <div className="space-y-3">
+              <Textarea
+                placeholder="Describe your product (opcional)"
+                value={productContext}
+                onChange={(e) => setProductContext(e.target.value)}
+                className="min-h-[80px] resize-none"
+                maxLength={500}
+              />
+            </div>
+
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-700 text-sm font-medium">{error}</p>
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-destructive text-sm text-center">{error}</p>
               </div>
             )}
-          </div>
 
-          {/* Analyze Button */}
-          <div className="text-center">
             <Button
               onClick={handleAnalyze}
-              disabled={!selectedImage}
-              className={`
-                px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200
-                ${
-                  selectedImage
-                    ? "bg-black text-white hover:bg-gray-800 shadow-sm hover:shadow-md"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                }
-              `}
+              disabled={!imagePreview}
+              className="w-full bg-primary hover:bg-primary/90"
+              size="lg"
             >
-              Analisar Tela
+              <Zap className="w-5 h-5 mr-2" />
+              Analyze my product
             </Button>
+
+            
           </div>
         </div>
-      </main>
+      </section>
+
+      {/* Features Section */}
+      
+
+      {/* Footer */}
+      <footer className="py-12 bg-background border-t border-border">
+        <div className="max-w-7xl mx-auto px-6">
+          
+          <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
+            <p>&copy; 2024 Audito. Todos os direitos reservados.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
