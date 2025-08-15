@@ -25,21 +25,21 @@ const mockIssues: Issue[] = [
     title: "Problema",
     description: 'O botão "Finalizar ordem" é a ação mais proeminente na tela (botão primário).',
     impact: "Alto",
-    suggestion: "",
+    suggestion: "Reavaliar a Hierarquia do Botão e Adicionar Confirmação",
   },
   {
     id: "2",
     title: "Problema",
     description: 'O botão "Finalizar ordem" é a ação mais proeminente na tela (botão primário).',
     impact: "Médio",
-    suggestion: "",
+    suggestion: "Reavaliar a Hierarquia do Botão",
   },
   {
     id: "3",
     title: "Problema",
     description: 'O botão "Finalizar ordem" é a ação mais proeminente na tela (botão primário).',
     impact: "Baixo",
-    suggestion: "",
+    suggestion: "Reavaliar a Hierarquia do Botão",
   },
 ]
 
@@ -74,177 +74,99 @@ export default function ResultsScreen({
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex gap-8">
-          <div className="flex-1" style={{ maxWidth: "65%" }}>
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+              {/* Browser Header */}
               <div className="bg-primary px-4 py-3 flex items-center gap-2">
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 bg-red-400 rounded-full"></div>
                   <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
                   <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 </div>
-                <div className="flex-1 mx-4 text-white text-sm">/ support@global.pay</div>
-                <div className="text-white text-sm flex items-center gap-4">
+                <div className="flex-1 mx-4 bg-white/20 rounded px-3 py-1 text-sm text-white/80">
+                  / support@global.pay
+                </div>
+                <div className="text-sm text-white/80 flex items-center gap-4">
                   <span>Currency</span>
                   <span>Data</span>
                   <span>Web App</span>
                   <span>Payment</span>
-                  <span>En 🌐</span>
+                  <span>🌐 En</span>
                   <span>Login</span>
                   <span>Try Demo →</span>
                 </div>
               </div>
 
-              <div className="p-8 bg-white min-h-[600px]">
-                <div className="space-y-8">
-                  {/* Hero section */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h1 className="text-5xl font-bold text-gray-900 mb-4">
-                        Payment Made
-                        <br />
-                        Easier ~
-                      </h1>
-                      <div className="text-lg text-gray-600">
-                        <span>/</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="bg-gray-100 px-4 py-2 rounded-lg inline-block mb-2">
-                        Send Global Payment
-                        <br />
-                        In 10 Mins
-                      </div>
-                      <Button className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg">
-                        Send →
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Mobile and desktop mockups */}
-                  <div className="flex gap-8 items-center">
-                    {/* Mobile mockup */}
-                    <div className="bg-purple-100 p-6 rounded-2xl">
-                      <div className="bg-black rounded-2xl p-4 w-48">
-                        <div className="bg-white rounded-xl p-4 space-y-3">
-                          <div className="flex items-center justify-between text-sm">
-                            <span>Account Linked</span>
-                            <span>+</span>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span className="text-2xl font-bold">$20,000</span>
-                              <span className="text-lg">$15,000</span>
-                            </div>
-                            <div className="text-sm text-gray-500">Today's Income</div>
-                          </div>
-                          <div className="space-y-2">
-                            {[1, 2, 3, 4].map((i) => (
-                              <div key={i} className="flex items-center gap-2">
-                                <div className="w-6 h-6 bg-purple-200 rounded"></div>
-                                <div className="flex-1 h-2 bg-gray-100 rounded"></div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Desktop section */}
-                    <div className="bg-green-100 p-6 rounded-2xl flex-1">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white">
-                          ✱
-                        </div>
-                        <span className="font-semibold">Global Pay</span>
-                        <div className="ml-auto flex items-center gap-2">
-                          <span>David</span>
-                          <span>Received Payment 👋</span>
-                        </div>
-                      </div>
-
-                      <div className="bg-green-200 rounded-lg p-4 mb-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-black rounded-full"></div>
-                          <div className="bg-white px-3 py-1 rounded-full text-sm">Upfront sent — 💰</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-center space-x-8">
-                        <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
-                          <div className="w-6 h-6 border-2 border-white rounded-full"></div>
-                        </div>
-                        <div className="flex-1 h-1 bg-black"></div>
-                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">🌍</div>
-                        <div className="flex-1 h-1 bg-black"></div>
-                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">⚡</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Company logos */}
-                  <div className="flex items-center justify-between text-xl font-bold text-gray-800">
-                    <span>Rakuten</span>
-                    <span>⊕NCR</span>
-                    <span>monday.com</span>
-                    <span>Disney</span>
-                    <span>Dropbox</span>
-                  </div>
-
-                  {/* Bottom text */}
-                  <div className="text-4xl font-bold text-gray-900">
-                    Now we've made — capital accessible
-                    <br />
-                    even more companies 👤 directly through
-                  </div>
-                </div>
+              <div className="p-0 bg-white min-h-[700px]">
+                <img
+                  src={
+                    imagePreview ||
+                    "/placeholder.svg?height=700&width=1200&query=Payment Made Easier landing page with mobile app mockup and company logos"
+                  }
+                  alt="Payment Made Easier - Global Pay landing page"
+                  className="w-full h-auto"
+                />
               </div>
             </div>
           </div>
 
-          <div className="w-80 space-y-4">
+          <div className="lg:col-span-1 space-y-6">
             {issues.map((issue, index) => (
               <div key={issue.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                 <div className="space-y-3">
+                  {/* Problem Header */}
                   <div className="flex items-start gap-3">
-                    <span className="text-lg font-semibold text-gray-900">{index + 1}</span>
+                    <div className="flex-shrink-0">
+                      <span className="text-gray-900 font-semibold text-base">{index + 1}</span>
+                    </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-2">{issue.title}</h3>
-                      <p className="text-sm text-gray-700 leading-relaxed mb-3">{issue.description}</p>
+                      <h3 className="font-semibold text-gray-900 text-base">{issue.title}</h3>
                     </div>
                   </div>
 
-                  <div>
+                  {/* Description */}
+                  <div className="ml-6">
+                    <p className="text-gray-700 text-sm leading-relaxed mb-4">{issue.description}</p>
+                  </div>
+
+                  {/* Impact Section */}
+                  <div className="ml-6">
                     <h4 className="font-semibold text-gray-900 text-sm mb-2">Impacto</h4>
-                    <p className="text-sm text-gray-700 leading-relaxed mb-3">
+                    <p className="text-gray-700 text-sm leading-relaxed mb-4">
                       Em uma tela de monitoramento, a principal ação não é necessariamente "finalizar". Isso pode levar
                       a cliques acidentais que interrompem a produção.
                     </p>
 
+                    {/* Suggestion Section */}
                     <h4 className="font-semibold text-gray-900 text-sm mb-2">Sugestão</h4>
-                    <div className="space-y-1 text-sm text-gray-700">
-                      <p>
+                    <div className="space-y-2">
+                      <p className="text-gray-700 text-sm leading-relaxed">
                         • Reavaliar a Hierarquia do Botão: Considere tornar "Finalizar ordem" um botão secundário (ex:
                         com contorno, sem preenchimento sólido) para reduzir sua proeminência.
                       </p>
-                      <p>
-                        • Adicionar Confirmação: Ao clicar em "Finalizar ordem", exiba um modal de confirmação ("Você
-                        tem certeza que deseja finalizar a Ordem 00000000? Esta ação não pode ser desfeita.") para
-                        prevenir erros.
-                      </p>
+                      {index === 0 && (
+                        <p className="text-gray-700 text-sm leading-relaxed">
+                          • Adicionar Confirmação: Ao clicar em "Finalizar ordem", exiba um modal de confirmação ("Você
+                          tem certeza que deseja finalizar a Ordem 00000000? Esta ação não pode ser desfeita.") para
+                          prevenir erros.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
             ))}
 
+            {/* New Analysis Button */}
             <div className="pt-4">
               <Button
                 onClick={onNewAnalysis}
-                className="w-full bg-primary text-white hover:bg-primary/90 px-6 py-3 rounded-lg font-semibold"
+                className="w-full bg-primary text-white hover:bg-primary/90 px-6 py-3 rounded-lg font-semibold transition-all duration-200"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-4 h-4 mr-2" strokeWidth={1.5} />
                 Nova Análise
               </Button>
             </div>
