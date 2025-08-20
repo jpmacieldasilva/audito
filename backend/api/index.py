@@ -2,7 +2,6 @@ from fastapi import FastAPI, Request, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import time
-import traceback
 import json
 from typing import Optional
 
@@ -24,37 +23,6 @@ app.add_middleware(
     max_age=600,
 )
 
-# Middleware para logging de requisições
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    start_time = time.time()
-    print(f"📥 {request.method} {request.url.path}")
-    
-    response = await call_next(request)
-    process_time = time.time() - start_time
-    
-    print(f"📤 {request.method} {request.url.path} - {response.status_code} - {process_time:.3f}s")
-    response.headers["X-Process-Time"] = str(process_time)
-    
-    return response
-
-# Handler global de erros
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    print(f"❌ Erro não tratado: {exc}")
-    print(f"📍 URL: {request.url}")
-    print(f"🔍 Método: {request.method}")
-    
-    return JSONResponse(
-        status_code=500,
-        content={
-            "success": False,
-            "error": "Erro interno do servidor",
-            "detail": str(exc),
-            "timestamp": time.time()
-        }
-    )
-
 # Rota raiz
 @app.get("/")
 async def root():
@@ -64,14 +32,14 @@ async def root():
         "status": "OK",
         "timestamp": time.time(),
         "endpoints": {
-            "analyze_upload": "/api/v1/analyze/upload",
-            "analyze_url": "/api/v1/analyze/url",
-            "health": "/api/v1/health"
+            "analyze_upload": "/api/analyze/upload",
+            "analyze_url": "/api/analyze/url",
+            "health": "/api/health"
         }
     }
 
 # Rota de health check
-@app.get("/api/v1/health")
+@app.get("/api/health")
 async def health_check():
     return {
         "status": "healthy",
@@ -81,7 +49,7 @@ async def health_check():
     }
 
 # Rota de análise de upload (simulada)
-@app.post("/api/v1/analyze/upload")
+@app.post("/api/analyze/upload")
 async def analyze_upload(
     file: UploadFile = File(...),
     product_context: Optional[str] = Form(None)
@@ -121,7 +89,7 @@ async def analyze_upload(
         raise HTTPException(status_code=500, detail=f"Erro ao processar arquivo: {str(e)}")
 
 # Rota de análise de URL (simulada)
-@app.post("/api/v1/analyze/url")
+@app.post("/api/analyze/url")
 async def analyze_url(request: Request):
     try:
         body = await request.json()
@@ -179,6 +147,3 @@ async def analyze_url(request: Request):
 def handler(request, context):
     """Handler para Vercel serverless functions"""
     return app(request, context)
-
-# Export da aplicação para Vercel
-vercel_app = app

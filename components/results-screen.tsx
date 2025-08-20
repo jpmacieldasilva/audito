@@ -1,7 +1,7 @@
 "use client"
 
-import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ArrowLeft } from "lucide-react"
 
 interface Issue {
   id: string
@@ -20,148 +20,160 @@ interface ResultsScreenProps {
   onNewAnalysis: () => void
 }
 
-const mockIssues: Issue[] = [
-  {
-    id: "1",
-    title: "Problema de Hierarquia Visual",
-    problem: "O botão 'Finalizar ordem' é a ação mais proeminente na tela (botão primário).",
-    impact: "Pode levar a cliques acidentais que interrompem a produção, aumentando o risco de erros operacionais.",
-    suggestion: "Reavaliar a hierarquia do botão e adicionar confirmação antes da execução.",
-    category: "Hierarquia"
-  },
-  {
-    id: "2",
-    title: "Falta de Confirmação",
-    problem: "Ações críticas não possuem confirmação antes da execução.",
-    impact: "Aumenta a probabilidade de ações não intencionais, especialmente em ambientes de produção.",
-    suggestion: "Implementar modais de confirmação para ações críticas com opção de cancelamento.",
-    category: "Usabilidade"
-  },
-  {
-    id: "3",
-    title: "Organização de Elementos",
-    problem: "Elementos de controle estão distribuídos de forma não intuitiva na interface.",
-    impact: "Reduz a eficiência do usuário e aumenta o tempo de aprendizado da interface.",
-    suggestion: "Agrupar elementos relacionados e criar uma hierarquia visual clara.",
-    category: "Visual"
-  },
-]
-
 export default function ResultsScreen({
   imagePreview,
   imageName,
   userContext = "Interface analisada",
-  issues = mockIssues,
+  issues = [],
   onNewAnalysis,
 }: ResultsScreenProps) {
   return (
-    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
-      <header className="bg-primary text-white flex-shrink-0">
-        
-      </header>
+    <div className="h-screen bg-gray-50 flex flex-col">
 
-      {/* Main Content - Altura fixa com overflow hidden */}
-      <main className="flex-1 overflow-hidden flex">
-        <div className="h-full w-full max-w-7xl mx-auto px-6 py-6 flex">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full w-full">
-            {/* Área do Browser - Estática, sem scroll */}
-            <div className="lg:col-span-3 h-full overflow-hidden">
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 h-full flex flex-col overflow-hidden">
-                {/* Browser Header */}
-                <div className="bg-primary px-4 py-3 flex items-center gap-2 flex-shrink-0">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                  </div>
+      {/* Main Content - Layout estilo Lovable com proporções 70/30 */}
+      <main className="flex-1 flex overflow-hidden">
+        {/* Canvas Central - 70% da largura, imagem full-width */}
+        <div className="flex-[7] bg-gray-50 flex items-center justify-center p-6" style={{ overflow: "hidden" }}>
+          <div className="w-full h-full flex items-center justify-center">
+            {/* Browser Mockup */}
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden w-full h-full flex flex-col">
+              {/* Browser Header */}
+              <div className="bg-green-600 flex items-center gap-3 flex-shrink-0 px-4" style={{ height: "40px" }}>
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+                  <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                  <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 </div>
-
-                {/* Área da imagem - flexível, mas sem scroll */}
-                {/* 
-                  Área da imagem travada na tela, sem scroll.
-                  O container e a imagem ocupam todo o espaço disponível, sem permitir rolagem.
-                  O overflow está oculto e a imagem é centralizada e contida.
-                */}
-                <div className="flex-1 bg-white overflow-hidden flex items-center justify-center p-0 h-full w-full">
-                  <img
-                    src={
-                      imagePreview ||
-                      "/placeholder.svg?height=700&width=1200&query=Payment Made Easier landing page with mobile app mockup and company logos"
-                    }
-                    alt="Interface analisada"
-                    className="object-contain h-full w-full"
-                    draggable={false}
-                    style={{ pointerEvents: "none", userSelect: "none" }}
-                  />
+                <div className="flex-1 flex justify-center">
+                  <div className="rounded-lg px-4 py-2 text-sm text-white font-mono">
+                    {/* Exibe a URL do site capturado, se disponível, senão o nome da imagem, senão fallback */}
+                    {imageName ? imageName : (imagePreview ? imagePreview : "audito.dev")}
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Área das Sugestões - Com scroll */}
-            <div className="lg:col-span-1 h-full overflow-hidden">
-              <div className="h-full overflow-y-auto space-y-6 pr-2 pb-6">
-                {/* User Context Card */}
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                  <div className="space-y-3">
-                    <h3 className="font-semibold text-gray-900 text-lg">Contexto do Usuário</h3>
-                    <p className="text-gray-700 text-sm leading-relaxed">{userContext}</p>
+              
+              {/* Área da imagem - Full-width sem scroll */}
+              <div className="flex-1 bg-white overflow-hidden">
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Interface analisada"
+                    className="w-full object-contain"
+                    draggable={false}
+                    style={{ 
+                      pointerEvents: "none", 
+                      userSelect: "none"
+                    }}
+                    onError={(e) => {
+                      console.error('Erro ao carregar imagem:', imagePreview)
+                      e.currentTarget.src = "/placeholder.svg"
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-gray-500 h-full">
+                    <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm">Imagem não disponível</p>
                   </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Sidebar Lateral - 30% da largura */}
+        <div className="flex-[3] bg-white border-l border-gray-200 overflow-hidden">
+          <div className="h-full overflow-y-auto custom-scrollbar" style={{ scrollBehavior: "smooth" }}>
+            <div className="p-6 space-y-6">
+              {/* User Context Card */}
+              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-gray-900 text-lg">Contexto do Usuário</h3>
+                  <p className="text-gray-700 text-sm leading-relaxed">{userContext}</p>
                 </div>
+              </div>
 
-                {/* Issues List */}
-                {issues.map((issue, index) => (
-                  <div key={issue.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                    <div className="space-y-4">
-                      {/* Issue Header */}
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0">
-                          <span className="text-gray-900 font-semibold text-base">{index + 1}</span>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 text-base">{issue.title}</h3>
-                          <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full mt-1">
-                            {issue.category}
-                          </span>
-                        </div>
+              {/* Issues List */}
+              {issues.map((issue, index) => (
+                <div key={issue.id} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div className="space-y-4">
+                    {/* Issue Header */}
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        <span className="text-gray-900 font-bold text-lg">{index + 1}</span>
                       </div>
-
-                      {/* Problem */}
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-gray-900 text-sm">Problema:</h4>
-                        <p className="text-gray-700 text-sm leading-relaxed">{issue.problem}</p>
-                      </div>
-
-                      {/* Impact */}
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-gray-900 text-sm">Impacto:</h4>
-                        <p className="text-gray-700 text-sm leading-relaxed">{issue.impact}</p>
-                      </div>
-
-                      {/* Suggestion */}
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-gray-900 text-sm">Sugestão:</h4>
-                        <p className="text-gray-700 text-sm leading-relaxed">{issue.suggestion}</p>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 text-base mb-2">{issue.title}</h3>
+                        <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                          {issue.category}
+                        </span>
                       </div>
                     </div>
-                  </div>
-                ))}
 
-                {/* New Analysis Button */}
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                  <Button 
-                    onClick={onNewAnalysis}
-                    className="w-full bg-primary hover:bg-primary/90"
-                    size="lg"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Nova Análise
-                  </Button>
+                    {/* Problem */}
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-gray-900 text-sm font-semibold">Problema:</h4>
+                      <p className="text-gray-700 text-sm leading-relaxed">{issue.problem}</p>
+                    </div>
+
+                    {/* Impact */}
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-gray-900 text-sm font-semibold">Impacto:</h4>
+                      <p className="text-gray-700 text-sm leading-relaxed">{issue.impact}</p>
+                    </div>
+
+                    {/* Suggestion */}
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-gray-900 text-sm font-semibold">Sugestão:</h4>
+                      <p className="text-gray-700 text-sm leading-relaxed">{issue.suggestion}</p>
+                    </div>
+                  </div>
                 </div>
+              ))}
+
+              {/* New Analysis Button */}
+              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <Button 
+                  onClick={onNewAnalysis}
+                  className="w-full bg-primary hover:bg-primary/90 py-3"
+                  size="lg"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Nova Análise
+                </Button>
               </div>
             </div>
           </div>
         </div>
       </main>
+      
+      {/* CSS personalizado para scrollbar */}
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #d1d5db;
+          border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #9ca3af;
+        }
+        
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #d1d5db transparent;
+        }
+      `}</style>
     </div>
   )
 }

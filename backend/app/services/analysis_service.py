@@ -171,6 +171,7 @@ class AnalysisService:
                 "recommendations": analysis_result.get("recommendations", []),
                 "image_info": analysis_result.get("image_info", {}),
                 "source_url": analysis_result.get("source_url", None),
+                "screenshot_data": analysis_result.get("screenshot_data", None),
                 "analysis_timestamp": analysis_result.get("timestamp", None)
             }
             
@@ -212,5 +213,6 @@ class AnalysisService:
             "user_context": "Erro na análise",
             "recommendations": [],
             "image_info": {},
-            "source_url": None
+            "source_url": None,
+            "screenshot_data": None
         }

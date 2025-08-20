@@ -165,19 +165,19 @@ class ImageService:
                     # Cria nova página
                     page = await browser.new_page()
                     
-                    # Configura viewport para desktop
-                    await page.set_viewport_size({"width": 1280, "height": 720})
+                    # Configura viewport para desktop com largura total
+                    await page.set_viewport_size({"width": 1920, "height": 1080})
                     
                     # Navega para a página com timeout de 30 segundos
                     await page.goto(url, wait_until="domcontentloaded", timeout=30000)
                     
                     # Aguarda um pouco para o conteúdo carregar
-                    await page.wait_for_timeout(2000)
+                    await page.wait_for_timeout(3000)
                     
-                    # Captura screenshot em formato PNG
+                    # Captura screenshot em formato PNG com largura total
                     screenshot_bytes = await page.screenshot(
                         type="png",
-                        full_page=False  # Apenas viewport visível
+                        full_page=True  # Captura página completa para largura total
                     )
                     
                     # Verifica tamanho da imagem

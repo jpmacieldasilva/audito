@@ -47,7 +47,7 @@ export default function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Configuração da API
-  const API_BASE_URL = typeof window !== 'undefined' && (window as any).ENV?.API_URL ? (window as any).ENV.API_URL : "http://localhost:8000"
+  const API_BASE_URL = typeof window !== 'undefined' && (window as any).ENV?.API_URL ? (window as any).ENV.API_URL : "https://backend-5bhc5e1r1-joao-paulo-s-projects.vercel.app"
 
   const validateFile = (file: File): boolean => {
     const validTypes = ["image/png", "image/jpeg", "image/jpg"]
@@ -236,6 +236,7 @@ export default function HomePage() {
         }
 
         if (result.success) {
+          console.log('Debug - Resposta da API:', result)
           setAnalysisResult(result)
           setAppState("results")
         } else {
@@ -266,8 +267,29 @@ export default function HomePage() {
   }
 
   if (appState === "results" && imagePreview && analysisResult) {
-    // Use screenshot data if available, otherwise use the original preview
-    const displayImage = analysisResult.screenshot_data || imagePreview
+    // Para URLs de página web, usar screenshot_data se disponível, senão usar placeholder
+    // Para imagens diretas, usar sempre o imagePreview original
+    let displayImage = imagePreview
+    
+    if (imageUrl && !imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)) {
+      // É uma URL de página web, tentar usar screenshot
+      if (analysisResult.screenshot_data && analysisResult.screenshot_data.startsWith('data:image')) {
+        displayImage = analysisResult.screenshot_data
+      } else if (analysisResult.screenshot_data && analysisResult.screenshot_data.startsWith('http')) {
+        displayImage = analysisResult.screenshot_data
+      } else {
+        // Se não temos screenshot válido, usar placeholder
+        displayImage = "/placeholder.svg"
+      }
+    }
+    
+    console.log('Debug - Imagem para exibição:', {
+      originalPreview: imagePreview,
+      screenshotData: analysisResult.screenshot_data,
+      displayImage: displayImage,
+      isWebPage: imageUrl && !imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i),
+      screenshotType: analysisResult.screenshot_data ? typeof analysisResult.screenshot_data : 'undefined'
+    })
     
     return (
       <ResultsScreen
@@ -282,38 +304,21 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-serif font-bold text-foreground">Audito</h1>
-            </div>
-            <nav className="hidden md:flex items-center space-x-8">
-              
-              
-              {/* <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-                Pricing
-              </a> */}
-              
-              
-            </nav>
-          </div>
-        </div>
-      </header>
+    <div className="h-screen bg-background flex flex-col">
+     
 
       {/* Hero Section with Integrated Upload */}
-      <section className="py-20 md:py-32 bg-grid-pattern">
+      <section className="flex-1 flex items-center justify-center bg-grid-pattern">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-12">
+            <h1 className="text-2xl font-serif font-bold text-foreground">Audito</h1>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-foreground mb-6 leading-tight">
               Transforme seu produto
               <br />
               <span className="text-primary italic">em experiências perfeitas</span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-12 leading-relaxed max-w-3xl mx-auto">
-              Insights preciso para melhorar a usabilidade do seu produto
+              Insights precisos para melhorar a usabilidade do seu produto
             </p>
           </div>
 
@@ -328,7 +333,7 @@ export default function HomePage() {
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Upload className="w-5 h-5 mr-2" />
-                  Upload a image
+                  Upload de imagem
                 </Button>
 
                 <div className="flex items-center gap-2">
@@ -382,7 +387,7 @@ export default function HomePage() {
 
             <div className="space-y-3">
               <Textarea
-                placeholder="Describe your product (opcional)"
+                placeholder="Descreva seu produto (opcional)"
                 value={productContext}
                 onChange={(e) => setProductContext(e.target.value)}
                 className="min-h-[80px] resize-none"
@@ -403,7 +408,7 @@ export default function HomePage() {
               size="lg"
             >
               <Zap className="w-5 h-5 mr-2" />
-              Analyze my product
+              Analise meu produto
             </Button>
 
             
@@ -413,16 +418,6 @@ export default function HomePage() {
 
       {/* Features Section */}
       
-
-      {/* Footer */}
-      <footer className="py-12 bg-background border-t border-border">
-        <div className="max-w-7xl mx-auto px-6">
-          
-          <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2024 Audito. Todos os direitos reservados.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
