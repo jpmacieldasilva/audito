@@ -1,0 +1,33 @@
+{
+  "name": "Audito - Análise de Interface com IA",
+  "short_name": "Audito",
+  "description": "Analise e melhore suas interfaces com inteligência artificial. Obtenha insights instantâneos sobre usabilidade, acessibilidade e design.",
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-48x48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#1E3A8A",
+  "background_color": "#0F172A",
+  "display": "standalone",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "pt-BR"
+}
