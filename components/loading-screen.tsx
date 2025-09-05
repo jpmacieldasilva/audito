@@ -1,19 +1,19 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Loader2, CheckCircle2 } from "lucide-react"
+import React, { useState, useEffect } from "react"
+import { Loader2, CheckCircle2, Sparkles, Zap, Shield, ArrowRight } from "lucide-react"
+import { Progress } from "./ui/progress"
 
 interface LoadingScreenProps {
   imagePreview: string
   imageName: string
 }
 
-// Etapas simplificadas do processo de análise
+// Analysis steps with icons
 const analysisSteps = [
-  "Capturando screenshot da página",
-  "Analisando elementos visuais",
-  "Verificando usabilidade e acessibilidade",
-  "Gerando recomendações personalizadas"
+  { name: "Analisando elementos visuais", icon: Sparkles },
+  { name: "Verificando usabilidade e acessibilidade", icon: Shield },
+  { name: "Gerando recomendações personalizadas", icon: Zap }
 ]
 
 export default function LoadingScreen({ imagePreview, imageName }: LoadingScreenProps) {
@@ -21,7 +21,7 @@ export default function LoadingScreen({ imagePreview, imageName }: LoadingScreen
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
-    const stepDuration = 4000 // 4 segundos por etapa
+    const stepDuration = 4000 // 4 seconds per step
     const totalDuration = stepDuration * analysisSteps.length
     
     const interval = setInterval(() => {
@@ -50,79 +50,127 @@ export default function LoadingScreen({ imagePreview, imageName }: LoadingScreen
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="max-w-md w-full space-y-8">
-        
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto">
-            <Loader2 className="w-10 h-10 text-white animate-spin" />
+    <div className="min-h-screen bg-gradient-to-br from-background/80 via-background to-background/90 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Background animated gradient effect */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <div 
+          className="absolute inset-0 bg-[conic-gradient(from_0deg,theme(colors.blue.800),theme(colors.slate.600),theme(colors.gray.600),theme(colors.blue.800))] animate-[spin_8s_linear_infinite] blur-3xl"
+        />
+      </div>
+
+      <div className="max-w-md w-full space-y-8 relative z-10">
+        {/* Header with animated icon */}
+        <div className="text-center space-y-5">
+          <div className="relative w-24 h-24 mx-auto">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-800 to-slate-600 rounded-full opacity-20 animate-pulse" />
+            <div className="absolute inset-2 bg-gradient-to-r from-blue-900 to-slate-700 rounded-full flex items-center justify-center shadow-lg">
+              <Loader2 className="w-10 h-10 text-white animate-spin" />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Analisando Interface</h1>
-          <p className="text-gray-600">Aguarde enquanto nossa IA examina sua interface</p>
+          <h1 className="text-2xl font-bold text-foreground">Analisando Interface</h1>
+          <p className="text-muted-foreground">Nossa IA está examinando sua interface em busca de insights</p>
         </div>
 
         {/* Progress Bar */}
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Progresso</span>
-            <span className="font-medium text-primary">{Math.round(progress)}%</span>
+            <span className="text-muted-foreground font-medium">Progresso da Análise</span>
+            <span className="font-bold text-foreground">{Math.round(progress)}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-3">
-            <div
-              className="bg-primary h-3 rounded-full transition-all duration-300 ease-out"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+          <Progress 
+            value={progress} 
+            className="h-2"
+          />
         </div>
 
-        {/* Current Step */}
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-medium">{currentStep + 1}</span>
+        {/* Current Step Card with Glow Effect */}
+        <div className="bg-card/50 backdrop-blur-sm rounded-xl p-5 border border-border shadow-sm relative overflow-hidden group">
+          {/* Subtle glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-800/10 to-slate-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-800 to-slate-600 rounded-full flex items-center justify-center shadow-md">
+              {React.createElement(analysisSteps[currentStep].icon, { className: "w-6 h-6 text-white" })}
             </div>
             <div>
-              <p className="font-medium text-gray-900">{analysisSteps[currentStep]}</p>
-              <p className="text-sm text-gray-500">Etapa {currentStep + 1} de {analysisSteps.length}</p>
+              <p className="font-semibold text-foreground">{analysisSteps[currentStep].name}</p>
+              <p className="text-sm text-muted-foreground">Passo {currentStep + 1} de {analysisSteps.length}</p>
             </div>
           </div>
         </div>
 
-        {/* Steps List */}
-        <div className="bg-white rounded-lg p-4 border border-gray-200 space-y-3">
-          <h3 className="font-medium text-gray-900 text-sm">Etapas da Análise</h3>
-          {analysisSteps.map((step, index) => (
-            <div key={index} className="flex items-center gap-3">
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                index < currentStep ? 'bg-green-500' : 
-                index === currentStep ? 'bg-primary' : 
-                'bg-gray-300'
-              }`}>
-                {index < currentStep ? (
-                  <CheckCircle2 className="w-3 h-3 text-white" />
-                ) : (
-                  <span className="text-white text-xs font-medium">{index + 1}</span>
-                )}
+        {/* Steps List with Improved Visuals */}
+        <div className="bg-card/30 backdrop-blur-sm rounded-xl p-5 border border-border shadow-sm space-y-4">
+          <h3 className="font-semibold text-foreground text-sm">Processo de Análise</h3>
+          
+          <div className="space-y-3">
+            {analysisSteps.map((step, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                  index < currentStep ? 'bg-green-500 text-white' : 
+                  index === currentStep ? 'bg-blue-500 text-white' : 
+                  'bg-muted text-muted-foreground'
+                }`}>
+                  {index < currentStep ? (
+                    <CheckCircle2 className="w-4 h-4" />
+                  ) : index === currentStep ? (
+                    React.createElement(step.icon, { className: "w-4 h-4" })
+                  ) : (
+                    <span className="text-xs font-bold">{index + 1}</span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <span className={`text-sm font-medium ${
+                    index < currentStep ? 'text-green-600 dark:text-green-400' : 
+                    index === currentStep ? 'text-blue-600 dark:text-blue-400' : 
+                    'text-muted-foreground'
+                  }`}>
+                    {step.name}
+                  </span>
+                  
+                  {/* Progress line for current step */}
+                  {index === currentStep && (
+                    <div className="h-1 bg-muted rounded-full mt-1 overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-500 rounded-full"
+                        style={{ 
+                          width: `${(progress - (currentStep * (100/analysisSteps.length))) * (analysisSteps.length)}%`,
+                          maxWidth: '100%'
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-              <span className={`text-sm ${
-                index < currentStep ? 'text-green-700' : 
-                index === currentStep ? 'text-primary' : 
-                'text-gray-500'
-              }`}>
-                {step}
-              </span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        {/* Time Estimate */}
-        <div className="text-center">
-          <p className="text-sm text-gray-500">
-            Tempo estimado: <span className="font-medium">15-30 segundos</span>
+        {/* Time Estimate with Improved Design */}
+        <div className="bg-card/20 backdrop-blur-sm rounded-xl p-4 border border-border shadow-sm flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Tempo estimado restante:
           </p>
+          <span className="text-sm font-bold text-foreground bg-background/50 px-3 py-1 rounded-full">
+            15-30 segundos
+          </span>
         </div>
-
+        
+        {/* Preview Badge */}
+        {imagePreview && (
+          <div className="absolute -top-2 -right-2 bg-card rounded-lg p-2 border border-border shadow-md">
+            <div className="relative w-16 h-16 rounded-md overflow-hidden">
+              <img 
+                src={imagePreview} 
+                alt={imageName} 
+                className="object-cover w-full h-full"
+              />
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                <ArrowRight className="w-4 h-4 text-white" />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

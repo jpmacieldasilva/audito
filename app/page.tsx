@@ -1,13 +1,16 @@
 "use client"
 
 import { useState, useCallback, useRef } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Zap, Shield, TrendingUp, Users, Award, Clock, Upload, X, LinkIcon } from "lucide-react"
+import { Zap, Shield, TrendingUp, Users, Award, Clock, Upload, X, LinkIcon, Sparkles, Target, Lock, FileText, Check, AlertCircle } from "lucide-react"
+import { AnimatedTextCycle, GlassCard, FloatingElements } from "@/components/magic-ui"
 import LoadingScreen from "@/components/loading-screen"
 import ResultsScreen from "@/components/results-screen"
+import ErrorDisplay from "@/components/ui/error-display"
 
 type AppState = "landing" | "loading" | "results"
 
@@ -31,6 +34,7 @@ interface AnalysisResult {
   screenshot_data?: string
   analysis_timestamp?: number
   error?: string
+  error_type?: 'error' | 'warning' | 'info'
 }
 
 export default function HomePage() {
@@ -38,16 +42,18 @@ export default function HomePage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageUrl, setImageUrl] = useState<string>("")
-  const [productContext, setProductContext] = useState<string>("")
   const [isDragOver, setIsDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [errorType, setErrorType] = useState<'error' | 'warning' | 'info'>('error')
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
+  const [activeTab, setActiveTab] = useState<'upload' | 'url'>('upload')
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
   
   // Ref para o input file
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Configuração da API
-  const API_BASE_URL = typeof window !== 'undefined' && (window as any).ENV?.API_URL ? (window as any).ENV.API_URL : "https://backend-5bhc5e1r1-joao-paulo-s-projects.vercel.app"
+  // Configuração da API - agora usando as API routes locais
+  const API_BASE_URL = "/api"
 
   const validateFile = (file: File): boolean => {
     const validTypes = ["image/png", "image/jpeg", "image/jpg"]
@@ -55,15 +61,18 @@ export default function HomePage() {
 
     if (!validTypes.includes(file.type)) {
       setError("Formato não suportado. Use PNG ou JPG.")
+      setErrorType('error')
       return false
     }
 
     if (file.size > maxSize) {
       setError("Arquivo muito grande. Máximo 5MB.")
+      setErrorType('warning')
       return false
     }
 
     setError(null)
+    setErrorType('error')
     return true
   }
 
@@ -72,9 +81,11 @@ export default function HomePage() {
       new URL(url)
       // Aceita qualquer URL válida (imagem direta ou página web)
       setError(null)
+      setErrorType('error')
       return true
     } catch {
       setError("URL inválida. Verifique o formato.")
+      setErrorType('error')
       return false
     }
   }
@@ -123,6 +134,7 @@ export default function HomePage() {
     } else {
       setImagePreview(null)
       setError(null)
+      setErrorType('error')
     }
   }
 
@@ -158,25 +170,26 @@ export default function HomePage() {
     setImagePreview(null)
     setImageUrl("")
     setError(null)
+    setErrorType('error')
   }
 
   // Função para analisar imagem via upload
-  const analyzeUploadedImage = async (file: File, context: string) => {
+  const analyzeUploadedImage = async (file: File) => {
     const formData = new FormData()
     formData.append('file', file)
-    if (context) {
-      formData.append('product_context', context)
-    }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/analyze/upload`, {
+      const response = await fetch(`${API_BASE_URL}/analyze/upload`, {
         method: 'POST',
         body: formData,
       })
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Erro na análise')
+        const error = new Error(errorData.error || 'Erro na análise')
+        // Adiciona o tipo de erro ao objeto de erro
+        ;(error as any).errorType = errorData.error_type || 'error'
+        throw error
       }
 
       const result: AnalysisResult = await response.json()
@@ -188,17 +201,16 @@ export default function HomePage() {
   }
 
   // Função para analisar imagem via URL
-  const analyzeImageFromUrl = async (url: string, context: string) => {
+  const analyzeImageFromUrl = async (url: string) => {
     try {
       console.log('Enviando requisição para análise de URL:', url)
-      const response = await fetch(`${API_BASE_URL}/api/analyze/url`, {
+      const response = await fetch(`${API_BASE_URL}/analyze/url`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          url: url,
-          product_context: context
+          url: url
         }),
       })
 
@@ -207,7 +219,10 @@ export default function HomePage() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         console.error('Erro na resposta da API:', response.status, errorData)
-        throw new Error(errorData.error || errorData.detail || `Erro na análise (${response.status})`)
+        const error = new Error(errorData.error || errorData.detail || `Erro na análise (${response.status})`)
+        // Adiciona o tipo de erro ao objeto de erro
+        ;(error as any).errorType = errorData.error_type || 'error'
+        throw error
       }
 
       const result: AnalysisResult = await response.json()
@@ -223,16 +238,17 @@ export default function HomePage() {
     if ((selectedImage && imagePreview) || (imageUrl && imagePreview)) {
       setAppState("loading")
       setError(null)
+      setIsAnalyzing(true)
 
       try {
         let result: AnalysisResult
 
         if (selectedImage) {
           // Análise de arquivo enviado
-          result = await analyzeUploadedImage(selectedImage, productContext)
+          result = await analyzeUploadedImage(selectedImage)
         } else {
           // Análise de URL
-          result = await analyzeImageFromUrl(imageUrl, productContext)
+          result = await analyzeImageFromUrl(imageUrl)
         }
 
         if (result.success) {
@@ -244,8 +260,13 @@ export default function HomePage() {
         }
       } catch (error) {
         console.error('Erro na análise:', error)
-        setError(error instanceof Error ? error.message : 'Erro desconhecido na análise')
+        const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido na análise'
+        const errorTypeFromAPI = (error as any)?.errorType || 'error'
+        setError(errorMessage)
+        setErrorType(errorTypeFromAPI)
         setAppState("landing")
+      } finally {
+        setIsAnalyzing(false)
       }
     }
   }
@@ -255,9 +276,10 @@ export default function HomePage() {
     setSelectedImage(null)
     setImagePreview(null)
     setImageUrl("")
-    setProductContext("")
     setError(null)
+    setErrorType('error')
     setAnalysisResult(null)
+    setActiveTab('upload')
   }
 
   if (appState === "loading" && imagePreview) {
@@ -304,120 +326,317 @@ export default function HomePage() {
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col">
-     
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden dark">
+      {/* Floating Background Elements */}
+      <FloatingElements />
 
-      {/* Hero Section with Integrated Upload */}
-      <section className="flex-1 flex items-center justify-center bg-grid-pattern">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h1 className="text-2xl font-serif font-bold text-foreground">Audito</h1>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-foreground mb-6 leading-tight">
-              Transforme seu produto
-              <br />
-              <span className="text-primary italic">em experiências perfeitas</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-12 leading-relaxed max-w-3xl mx-auto">
-              Insights precisos para melhorar a usabilidade do seu produto
-            </p>
-          </div>
-
-          {/* Integrated Upload Area */}
-          <div className="bg-card rounded-xl border border-border p-8 space-y-6 max-w-2xl mx-auto">
-            {!imagePreview ? (
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-                <Button
-                  type="button"
-                  size="lg"
-                  className="bg-primary hover:bg-primary/90 px-8"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="w-5 h-5 mr-2" />
-                  Upload de imagem
-                </Button>
-
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="url"
-                    placeholder="ou cole uma URL"
-                    value={imageUrl}
-                    onChange={(e) => handleUrlChange(e.target.value)}
-                    className="w-48 border-dashed"
-                  />
-                  <Button onClick={handleUrlSubmit} disabled={!imageUrl.trim()} size="lg" variant="outline">
-                    <LinkIcon className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg"
-                  onChange={handleFileInput}
-                  className="hidden"
-                />
+      {/* Header */}
+      <header className="sticky top-0 bg-black/20 backdrop-blur-md border-b border-white/10 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-800 to-blue-900 rounded-lg flex items-center justify-center">
+                <Zap className="w-5 h-5 text-white" />
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="relative">
-                  <button
-                    onClick={removeImage}
-                    className="absolute top-2 right-2 p-1 bg-background rounded-full shadow-sm border border-border z-10"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                  {imageUrl && !imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ? (
-                    <div className="w-full max-h-64 flex items-center justify-center rounded-lg border border-border bg-muted p-8">
-                      <div className="text-center">
-                        <LinkIcon className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-                        <p className="text-sm font-medium">Página web será capturada</p>
-                        <p className="text-xs text-muted-foreground mt-1">{imageUrl}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <img
-                      src={imagePreview || "/placeholder.svg"}
-                      alt="Preview"
-                      className="w-full max-h-64 object-contain rounded-lg border border-border"
-                    />
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-3">
-              <Textarea
-                placeholder="Descreva seu produto (opcional)"
-                value={productContext}
-                onChange={(e) => setProductContext(e.target.value)}
-                className="min-h-[80px] resize-none"
-                maxLength={500}
-              />
+              <h1 className="text-xl font-bold text-white">Audito</h1>
             </div>
-
-            {error && (
-              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <p className="text-destructive text-sm text-center">{error}</p>
-              </div>
-            )}
-
-            <Button
-              onClick={handleAnalyze}
-              disabled={!imagePreview}
-              className="w-full bg-primary hover:bg-primary/90"
-              size="lg"
-            >
-              <Zap className="w-5 h-5 mr-2" />
-              Analise meu produto
-            </Button>
-
-            
+            <nav className="flex items-center">
+              <Button 
+                onClick={() => {
+                  document.getElementById('upload-section')?.scrollIntoView({ behavior: 'smooth' })
+                }}
+                size="sm" 
+                className="bg-gradient-to-r from-blue-800 to-blue-900 hover:from-blue-900 hover:to-slate-900 text-white font-medium"
+              >
+                Teste agora
+              </Button>
+            </nav>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* Features Section */}
-      
+      {/* Hero Section */}
+      <section className="flex-1 flex items-center justify-center py-20 relative z-10">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-16"
+          >
+            {/* Hero Badge */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 mb-8"
+            >
+              <Sparkles className="w-4 h-4 text-blue-400" />
+              <span className="text-sm font-medium text-blue-300">Análise com IA</span>
+            </motion.div>
+
+            {/* Hero Title */}
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+              Analise seus{' '}
+              <AnimatedTextCycle
+                words={[
+                  'produtos',
+                  'designs',
+                  'protótipos',
+                  'conceitos',
+                  'ideias',
+                  'inovações'
+                ]}
+                interval={3000}
+                className="bg-gradient-to-r from-blue-300 to-blue-400 bg-clip-text text-transparent"
+              />
+              <br />
+              com precisão de IA
+            </h1>
+
+            <p className="text-xl text-gray-300 mb-12 leading-relaxed max-w-4xl mx-auto">
+              Envie imagens, compartilhe URLs e obtenha insights instantâneos com IA, 
+              análise competitiva e recomendações acionáveis.
+            </p>
+          </motion.div>
+
+          {/* Upload Section */}
+          <motion.div
+            id="upload-section"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="max-w-4xl mx-auto"
+          >
+            <GlassCard className="p-8">
+              {/* Tab Navigation */}
+              <div className="flex flex-wrap gap-2 mb-8 p-1 bg-muted/50 rounded-lg">
+                {[
+                  { id: 'upload', label: 'Enviar Arquivos', icon: Upload },
+                  { id: 'url', label: 'Por URL', icon: LinkIcon }
+                ].map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => setActiveTab(id as any)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      activeTab === id
+                        ? 'bg-white/10 text-white shadow-sm'
+                        : 'text-gray-300 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <AnimatePresence mode="wait">
+                {activeTab === 'upload' && (
+                  <motion.div
+                    key="upload"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {/* File Upload Area */}
+                    <div
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`relative border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300 ${
+                        isDragOver
+                          ? 'border-primary bg-primary/5 scale-105'
+                          : 'border-border hover:border-primary/50 hover:bg-muted/30'
+                      }`}
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg"
+                        onChange={handleFileInput}
+                        className="hidden"
+                      />
+                      
+                      <motion.div
+                        animate={isDragOver ? { scale: 1.1 } : { scale: 1 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex flex-col items-center gap-4"
+                      >
+                        <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">
+                          <Upload className="w-8 h-8 text-blue-400" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2 text-white">
+                            {isDragOver ? 'Solte os arquivos aqui' : 'Envie seus arquivos de produto'}
+                          </h3>
+                          <p className="text-gray-300">
+                            Arraste e solte arquivos aqui, ou clique para navegar
+                          </p>
+                          <p className="text-sm text-gray-400 mt-2">
+                            Suporta imagens até 5MB
+                          </p>
+                        </div>
+                      </motion.div>
+                    </div>
+
+                    {/* Image Preview */}
+                    {imagePreview && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="mt-6"
+                      >
+                        <div className="relative">
+                          <button
+                            onClick={removeImage}
+                            className="absolute top-2 right-2 p-1 bg-destructive/50 rounded-full shadow-sm border border-border z-10 hover:bg-destructive/70"
+                          >
+                            <X className="w-4 h-4 text-destructive-foreground" />
+                          </button>
+                          {imageUrl && !imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ? (
+                            <div className="w-full max-h-64 flex items-center justify-center rounded-lg border border-border bg-muted/50 p-8">
+                              <div className="text-center">
+                                <LinkIcon className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                                <p className="text-sm font-medium text-foreground">Página web será capturada</p>
+                                <p className="text-xs text-muted-foreground mt-1">{imageUrl}</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <img
+                              src={imagePreview || "/placeholder.svg"}
+                              alt="Visualização"
+                              className="w-full max-h-64 object-contain rounded-lg border border-border"
+                            />
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
+
+                {activeTab === 'url' && (
+                  <motion.div
+                    key="url"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="space-y-6">
+                      <div>
+                        <label htmlFor="url" className="block text-sm font-medium mb-2 text-white">
+                          URL do Produto
+                        </label>
+                        <div className="relative">
+                          <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <Input
+                            id="url"
+                            type="url"
+                            value={imageUrl}
+                            onChange={(e) => handleUrlChange(e.target.value)}
+                            placeholder="https://exemplo.com/produto"
+                            className="pl-10 h-12 bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-blue-400 focus:ring-blue-400"
+                          />
+                        </div>
+                        <p className="text-sm text-gray-400 mt-2">
+                          Digite uma URL para analisar a página do produto, imagens e conteúdo
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+              </AnimatePresence>
+
+
+              {/* Error Message */}
+              {error && (
+                <div className="mt-6">
+                  <ErrorDisplay
+                    error={error}
+                    type={errorType}
+                    onRetry={() => {
+                      setError(null)
+                      setErrorType('error')
+                      if (imagePreview) {
+                        handleAnalyze()
+                      }
+                    }}
+                    onDismiss={() => {
+                      setError(null)
+                      setErrorType('error')
+                    }}
+                    showDetails={true}
+                  />
+                </div>
+              )}
+
+              {/* Analyze Button */}
+              <Button
+                onClick={handleAnalyze}
+                disabled={!imagePreview || isAnalyzing}
+                className="w-full bg-gradient-to-r from-blue-800 to-blue-900 hover:from-blue-900 hover:to-slate-900 text-white font-semibold py-6 rounded-xl mt-6 shadow-lg hover:shadow-xl transition-all duration-300"
+                size="lg"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                    Analisando...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-5 h-5 mr-2" />
+                    Analisar Meu Produto
+                  </>
+                )}
+              </Button>
+            </GlassCard>
+
+            {/* Features Grid */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="grid md:grid-cols-3 gap-6 mt-16"
+            >
+              {[
+                {
+                  icon: Sparkles,
+                  title: 'Insights com IA',
+                  description: 'Obtenha análise detalhada usando inteligência artificial.'
+                },
+                {
+                  icon: Check,
+                  title: 'Resultados Instantâneos',
+                  description: 'Receba insights em segundos, não horas'
+                },
+                {
+                  icon: AlertCircle,
+                  title: 'Recomendações Acionáveis',
+                  description: 'Obtenha sugestões específicas para melhorar sua estratégia de produto'
+                }
+              ].map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.8 + index * 0.1 }}
+                >
+                                  <GlassCard className="p-6 hover:bg-white/10 transition-all duration-300">
+                  <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center mb-4">
+                    <feature.icon className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <h3 className="font-semibold mb-2 text-white">{feature.title}</h3>
+                  <p className="text-gray-300 text-sm">{feature.description}</p>
+                </GlassCard>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
     </div>
   )
 }
