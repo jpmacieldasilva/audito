@@ -16,9 +16,70 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Audito - Seu companheiro de design para auditoria de telas",
-  description: "Analise e melhore suas interfaces com inteligência artificial",
-  generator: "v0.app",
+  title: {
+    default: "Audito - Análise de Interface com IA",
+    template: "%s | Audito"
+  },
+  description: "Analise e melhore suas interfaces com inteligência artificial. Obtenha insights instantâneos sobre usabilidade, acessibilidade e design com IA avançada.",
+  keywords: [
+    "análise de interface",
+    "design UX",
+    "usabilidade",
+    "acessibilidade",
+    "inteligência artificial",
+    "auditoria de design",
+    "UI/UX",
+    "análise de produto"
+  ],
+  authors: [{ name: "Audito Team" }],
+  creator: "Audito",
+  publisher: "Audito",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL('https://audito.app'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    url: 'https://audito.app',
+    title: 'Audito - Análise de Interface com IA',
+    description: 'Analise e melhore suas interfaces com inteligência artificial. Obtenha insights instantâneos sobre usabilidade, acessibilidade e design.',
+    siteName: 'Audito',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Audito - Análise de Interface com IA',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Audito - Análise de Interface com IA',
+    description: 'Analise e melhore suas interfaces com inteligência artificial.',
+    images: ['/og-image.png'],
+    creator: '@audito',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: 'your-google-verification-code',
+  },
 }
 
 export default function RootLayout({

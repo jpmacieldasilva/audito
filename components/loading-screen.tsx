@@ -54,7 +54,7 @@ export default function LoadingScreen({ imagePreview, imageName }: LoadingScreen
       {/* Background animated gradient effect */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
         <div 
-          className="absolute inset-0 bg-[conic-gradient(from_0deg,theme(colors.blue.800),theme(colors.slate.600),theme(colors.gray.600),theme(colors.blue.800))] animate-[spin_8s_linear_infinite] blur-3xl"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[200vw] h-[200vh] bg-[conic-gradient(from_0deg,theme(colors.blue.800),theme(colors.slate.600),theme(colors.gray.600),theme(colors.blue.800))] animate-[spin_8s_linear_infinite] blur-3xl"
         />
       </div>
 

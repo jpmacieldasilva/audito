@@ -68,17 +68,13 @@ export default function ResultsScreen({
             {/* Browser Mockup */}
             <div className="bg-card rounded-2xl shadow-2xl border border-border overflow-hidden w-full h-full flex flex-col">
               {/* Browser Header */}
-              <div className="bg-green-600 flex items-center gap-3 flex-shrink-0 px-4" style={{ height: "40px" }}>
+              <div className="bg-blue-600 flex items-center gap-3 flex-shrink-0 px-4" style={{ height: "40px" }}>
                 <div className="flex gap-2">
                   <div className="w-3 h-3 bg-red-400 rounded-full"></div>
                   <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
                   <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 </div>
-                <div className="flex-1 flex justify-center">
-                  <div className="rounded-lg px-4 py-2 text-sm text-white font-mono bg-black/20">
-                    {imageName ? imageName : (imagePreview ? imagePreview : "audito.dev")}
-                  </div>
-                </div>
+                
               </div>
               
               {/* Área da imagem - Full-width sem scroll */}
@@ -87,7 +83,7 @@ export default function ResultsScreen({
                   <img
                     src={imagePreview}
                     alt="Interface analisada"
-                    className="w-full h-full object-cover"
+                    className="w-full object-cover"
                     draggable={false}
                     style={{ 
                       pointerEvents: "none", 

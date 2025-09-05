@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import puppeteer from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
+import { getClientIP, checkRateLimit } from '@/lib/rate-limit';
+import { generateUrlHash, CACHE_CONFIG } from '@/lib/cache';
+import { createAnalysisPrompt, processAnalysisResponse } from '@/lib/analysis-utils';
+import cache from '@/lib/cache';
 
 // Inicializa cliente OpenAI
 const openai = new OpenAI({
@@ -22,17 +26,95 @@ function isDirectImageUrl(url: string): boolean {
   }
 }
 
-// Função para verificar se é URL válida
+// Whitelist de domínios permitidos para análise
+const ALLOWED_DOMAINS = [
+  'github.com',
+  'github.io',
+  'vercel.app',
+  'netlify.app',
+  'herokuapp.com',
+  'amazonaws.com',
+  'google.com',
+  'microsoft.com',
+  'apple.com',
+  'figma.com',
+  'dribbble.com',
+  'behance.net',
+  'medium.com',
+  'dev.to',
+  'stackoverflow.com',
+  'codepen.io',
+  'jsfiddle.net',
+  'codepen.io',
+  'repl.it',
+  'codesandbox.io'
+];
+
+// Função para verificar se é URL válida e segura
 function isValidUrl(url: string): boolean {
   try {
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    const urlObj = new URL(url);
+    
+    // Apenas HTTP e HTTPS são permitidos
+    if (!['http:', 'https:'].includes(urlObj.protocol)) {
       return false;
     }
     
-    // URLs bloqueadas
-    const blockedPatterns = ['localhost', '127.0.0.1', '0.0.0.0', 'file://', 'ftp://'];
+    // URLs bloqueadas por segurança
+    const blockedPatterns = [
+      'localhost',
+      '127.0.0.1',
+      '0.0.0.0',
+      '::1',
+      'file:',
+      'ftp:',
+      'data:',
+      'javascript:',
+      'vbscript:',
+      'mailto:',
+      'tel:',
+      'sms:',
+      '192.168.',
+      '10.',
+      '172.16.',
+      '172.17.',
+      '172.18.',
+      '172.19.',
+      '172.20.',
+      '172.21.',
+      '172.22.',
+      '172.23.',
+      '172.24.',
+      '172.25.',
+      '172.26.',
+      '172.27.',
+      '172.28.',
+      '172.29.',
+      '172.30.',
+      '172.31.'
+    ];
+    
     const urlLower = url.toLowerCase();
-    return !blockedPatterns.some(pattern => urlLower.includes(pattern));
+    if (blockedPatterns.some(pattern => urlLower.includes(pattern))) {
+      return false;
+    }
+    
+    // Verificar se o domínio está na whitelist (opcional - pode ser removido para permitir qualquer domínio público)
+    const hostname = urlObj.hostname.toLowerCase();
+    const isAllowedDomain = ALLOWED_DOMAINS.some(domain => 
+      hostname === domain || hostname.endsWith('.' + domain)
+    );
+    
+    // Se não estiver na whitelist, ainda permitir se for um domínio público válido
+    if (!isAllowedDomain) {
+      // Verificar se é um domínio público válido (não IP privado)
+      const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+      if (ipRegex.test(hostname)) {
+        return false; // Bloquear IPs diretos
+      }
+    }
+    
+    return true;
   } catch {
     return false;
   }
@@ -73,13 +155,13 @@ async function captureWebsiteScreenshot(url: string): Promise<{ success: boolean
   let browser;
   
   try {
-    console.log('🔄 Iniciando Puppeteer para capturar screenshot...');
+    // Iniciando captura de screenshot
     
     // Detecta o ambiente
     const isVercel = process.env.VERCEL === '1';
     const isLocal = process.env.NODE_ENV === 'development';
     
-    // Configuração base do Puppeteer
+    // Configuração segura do Puppeteer
     const puppeteerOptions: any = {
       headless: true,
       args: [
@@ -91,22 +173,59 @@ async function captureWebsiteScreenshot(url: string): Promise<{ success: boolean
         '--no-zygote',
         '--disable-gpu',
         '--single-process',
-        '--disable-web-security',
         '--disable-features=VizDisplayCompositor',
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding'
-      ]
+        '--disable-renderer-backgrounding',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-images',
+        '--disable-javascript',
+        '--disable-plugins-discovery',
+        '--disable-preconnect',
+        '--disable-background-networking',
+        '--disable-sync',
+        '--disable-translate',
+        '--hide-scrollbars',
+        '--mute-audio',
+        '--no-default-browser-check',
+        '--no-pings',
+        '--no-zygote',
+        '--disable-ipc-flooding-protection',
+        '--disable-hang-monitor',
+        '--disable-prompt-on-repost',
+        '--disable-client-side-phishing-detection',
+        '--disable-component-extensions-with-background-pages',
+        '--disable-default-apps',
+        '--disable-domain-reliability',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
+        '--disable-renderer-backgrounding',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-background-timer-throttling',
+        '--disable-renderer-backgrounding',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-dev-shm-usage',
+        '--disable-setuid-sandbox',
+        '--no-sandbox'
+      ],
+      timeout: 30000, // 30 segundos de timeout
+      protocolTimeout: 30000
     };
 
     if (isVercel) {
       // No Vercel, usa o @sparticuz/chromium
-      console.log('🌐 Configurando para ambiente Vercel...');
+      // Configurando para ambiente Vercel
       puppeteerOptions.executablePath = await chromium.executablePath();
       puppeteerOptions.args = [...puppeteerOptions.args, ...chromium.args];
     } else if (isLocal) {
       // Em desenvolvimento local, usa o Chrome do sistema
-      console.log('💻 Configurando para ambiente local...');
+      // Configurando para ambiente local
       puppeteerOptions.executablePath = process.platform === 'darwin' 
         ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
         : process.platform === 'win32'
@@ -129,8 +248,17 @@ async function captureWebsiteScreenshot(url: string): Promise<{ success: boolean
     // Configura user agent
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
     
+    // Validação adicional de URL antes de navegar
+    try {
+      const urlObj = new URL(url);
+      if (!['http:', 'https:'].includes(urlObj.protocol)) {
+        throw new Error('Protocolo não suportado');
+      }
+    } catch (error) {
+      return { success: false, error: 'URL inválida fornecida' };
+    }
+
     // Navega para a página com timeout de 30 segundos
-    console.log(`🔄 Navegando para: ${url}`);
     await page.goto(url, { 
       waitUntil: 'domcontentloaded', 
       timeout: 30000 
@@ -140,7 +268,6 @@ async function captureWebsiteScreenshot(url: string): Promise<{ success: boolean
     await new Promise(resolve => setTimeout(resolve, 3000));
     
     // Captura screenshot em formato PNG
-    console.log('📸 Capturando screenshot...');
     const screenshotBuffer = await page.screenshot({
       type: 'png',
       fullPage: true
@@ -157,7 +284,7 @@ async function captureWebsiteScreenshot(url: string): Promise<{ success: boolean
       return { success: false, error: `Screenshot muito grande. Máximo permitido: ${MAX_FILE_SIZE / (1024 * 1024)}MB` };
     }
     
-    console.log(`✅ Screenshot capturado com sucesso: ${arrayBuffer.byteLength} bytes`);
+    // Screenshot capturado com sucesso
     return { success: true, data: arrayBuffer };
     
   } catch (error) {
@@ -167,7 +294,7 @@ async function captureWebsiteScreenshot(url: string): Promise<{ success: boolean
     if (browser) {
       try {
         await browser.close();
-        console.log('🔒 Browser fechado');
+        // Browser fechado
       } catch (error) {
         console.error('Erro ao fechar browser:', error);
       }
@@ -270,6 +397,32 @@ function processAnalysisResponse(content: string): any {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verifica rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimitInfo = checkRateLimit(clientIP, 'url');
+    
+    if (!rateLimitInfo.allowed) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Muitas requisições. Tente novamente em alguns minutos.',
+          error_type: 'warning',
+          overall_assessment: "Rate limit excedido",
+          user_context: "Rate limit excedido",
+          recommendations: []
+        },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '5',
+            'X-RateLimit-Remaining': rateLimitInfo.remaining.toString(),
+            'X-RateLimit-Reset': new Date(rateLimitInfo.resetTime).toISOString(),
+            'Retry-After': Math.ceil((rateLimitInfo.resetTime - Date.now()) / 1000).toString()
+          }
+        }
+      );
+    }
+
     const body = await request.json();
     const { url, product_context: productContext = '' } = body;
 
@@ -342,11 +495,26 @@ export async function POST(request: NextRequest) {
     // Converte para base64
     const base64 = Buffer.from(imageData).toString('base64');
     
+    // Gera hash da URL para cache
+    const urlHash = generateUrlHash(url);
+    const cacheKey = cache.generateKey(CACHE_CONFIG.urlAnalysis.prefix, {
+      urlHash,
+      productContext: productContext || 'default'
+    });
+
+    // Tenta obter do cache primeiro
+    const cachedResult = cache.get(cacheKey);
+    if (cachedResult) {
+      return NextResponse.json({
+        ...cachedResult,
+        from_cache: true,
+        cache_timestamp: (cachedResult as any).analysis_timestamp || Date.now()
+      });
+    }
+
     // Cria prompt de análise
     const prompt = createAnalysisPrompt(productContext);
     
-    console.log(`🔄 Enviando análise para OpenAI com ${imageData.byteLength} bytes de imagem...`);
-
     // Chama OpenAI GPT-4 Vision
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -371,7 +539,7 @@ export async function POST(request: NextRequest) {
       max_tokens: 2000
     });
 
-    console.log("✅ Análise do OpenAI concluída com sucesso");
+    // Análise concluída com sucesso
 
     // Processa resposta
     const content = response.choices[0].message.content;
@@ -394,7 +562,8 @@ export async function POST(request: NextRequest) {
       recommendations: analysisResult.recommendations || [],
       image_info: imageInfo,
       source_url: url,
-      analysis_timestamp: Date.now()
+      analysis_timestamp: Date.now(),
+      from_cache: false
     };
 
     // Para páginas web, adiciona screenshot como base64
@@ -402,20 +571,64 @@ export async function POST(request: NextRequest) {
       formattedResult.screenshot_data = `data:image/png;base64,${base64}`;
     }
 
+    // Armazena no cache
+    cache.set(cacheKey, formattedResult, CACHE_CONFIG.urlAnalysis.ttl);
+
     return NextResponse.json(formattedResult);
 
   } catch (error) {
-    console.error('❌ Erro na análise:', error);
+    // Log do erro apenas no servidor (não expor para o cliente)
+    console.error('Erro interno na análise de URL:', {
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : 'Erro desconhecido',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Mensagens de erro genéricas para o cliente
+    let errorMessage = 'Ocorreu um erro interno durante a análise.';
+    let errorType = 'error';
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      const message = error.message.toLowerCase();
+      
+      if (message.includes('api key') || message.includes('openai')) {
+        errorMessage = 'Serviço temporariamente indisponível. Tente novamente mais tarde.';
+        errorType = 'error';
+        statusCode = 503;
+      } else if (message.includes('quota') || message.includes('rate limit')) {
+        errorMessage = 'Serviço temporariamente indisponível devido ao alto volume. Tente novamente em alguns minutos.';
+        errorType = 'warning';
+        statusCode = 429;
+      } else if (message.includes('timeout') || message.includes('timeout')) {
+        errorMessage = 'A análise demorou mais que o esperado. Tente novamente.';
+        errorType = 'warning';
+        statusCode = 408;
+      } else if (message.includes('network') || message.includes('fetch')) {
+        errorMessage = 'Erro de conectividade. Verifique sua conexão e tente novamente.';
+        errorType = 'error';
+        statusCode = 503;
+      } else if (message.includes('validation') || message.includes('invalid')) {
+        errorMessage = 'URL fornecida é inválida ou não acessível. Verifique e tente novamente.';
+        errorType = 'error';
+        statusCode = 400;
+      } else if (message.includes('puppeteer') || message.includes('browser')) {
+        errorMessage = 'Serviço temporariamente indisponível. Tente novamente mais tarde.';
+        errorType = 'error';
+        statusCode = 503;
+      }
+    }
     
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Erro desconhecido',
+        error: errorMessage,
+        error_type: errorType,
         overall_assessment: "Erro na análise",
         user_context: "Erro na análise",
         recommendations: []
       },
-      { status: 500 }
+      { status: statusCode }
     );
   }
 }

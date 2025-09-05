@@ -1,16 +1,35 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, lazy, Suspense } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Zap, Shield, TrendingUp, Users, Award, Clock, Upload, X, LinkIcon, Sparkles, Target, Lock, FileText, Check, AlertCircle } from "lucide-react"
+import { 
+  Zap, 
+  Shield, 
+  TrendingUp, 
+  Users, 
+  Award, 
+  Clock, 
+  Upload, 
+  X, 
+  LinkIcon, 
+  Sparkles, 
+  Target, 
+  Lock, 
+  FileText, 
+  Check, 
+  AlertCircle 
+} from "lucide-react"
 import { AnimatedTextCycle, GlassCard, FloatingElements } from "@/components/magic-ui"
-import LoadingScreen from "@/components/loading-screen"
-import ResultsScreen from "@/components/results-screen"
 import ErrorDisplay from "@/components/ui/error-display"
+import performanceMonitor from "@/lib/performance"
+
+// Lazy loading para componentes pesados
+const LoadingScreen = lazy(() => import("@/components/loading-screen"))
+const ResultsScreen = lazy(() => import("@/components/results-screen"))
 
 type AppState = "landing" | "loading" | "results"
 
@@ -35,6 +54,8 @@ interface AnalysisResult {
   analysis_timestamp?: number
   error?: string
   error_type?: 'error' | 'warning' | 'info'
+  from_cache?: boolean
+  cache_timestamp?: number
 }
 
 export default function HomePage() {
@@ -46,7 +67,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [errorType, setErrorType] = useState<'error' | 'warning' | 'info'>('error')
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
-  const [activeTab, setActiveTab] = useState<'upload' | 'url'>('upload')
+  const [activeTab, setActiveTab] = useState<'upload' | 'url'>('url')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   
   // Ref para o input file
@@ -55,7 +76,7 @@ export default function HomePage() {
   // Configuração da API - agora usando as API routes locais
   const API_BASE_URL = "/api"
 
-  const validateFile = (file: File): boolean => {
+  const validateFile = useCallback((file: File): boolean => {
     const validTypes = ["image/png", "image/jpeg", "image/jpg"]
     const maxSize = 5 * 1024 * 1024 // 5MB
 
@@ -74,9 +95,9 @@ export default function HomePage() {
     setError(null)
     setErrorType('error')
     return true
-  }
+  }, [])
 
-  const validateUrl = (url: string): boolean => {
+  const validateUrl = useCallback((url: string): boolean => {
     try {
       new URL(url)
       // Aceita qualquer URL válida (imagem direta ou página web)
@@ -88,7 +109,7 @@ export default function HomePage() {
       setErrorType('error')
       return false
     }
-  }
+  }, [])
 
   const handleFileSelect = (file: File) => {
     if (validateFile(file)) {
@@ -174,65 +195,87 @@ export default function HomePage() {
   }
 
   // Função para analisar imagem via upload
-  const analyzeUploadedImage = async (file: File) => {
-    const formData = new FormData()
-    formData.append('file', file)
+  const analyzeUploadedImage = useCallback(async (file: File) => {
+    return performanceMonitor.measureTimeAsync('upload_analysis', async () => {
+      const formData = new FormData()
+      formData.append('file', file)
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/analyze/upload`, {
-        method: 'POST',
-        body: formData,
-      })
+      try {
+        const response = await fetch(`${API_BASE_URL}/analyze/upload`, {
+          method: 'POST',
+          body: formData,
+        })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        const error = new Error(errorData.error || 'Erro na análise')
-        // Adiciona o tipo de erro ao objeto de erro
-        ;(error as any).errorType = errorData.error_type || 'error'
+        if (!response.ok) {
+          const errorData = await response.json()
+          const error = new Error(errorData.error || 'Erro na análise')
+          // Adiciona o tipo de erro ao objeto de erro
+          ;(error as any).errorType = errorData.error_type || 'error'
+          throw error
+        }
+
+        const result: AnalysisResult = await response.json()
+        
+        // Registra métricas de cache se disponível
+        if (result.from_cache) {
+          performanceMonitor.recordMetric('cache_hit', 1, 'counter', { type: 'upload' });
+        } else {
+          performanceMonitor.recordMetric('cache_miss', 1, 'counter', { type: 'upload' });
+        }
+
+        return result
+      } catch (error) {
+        console.error('Erro na análise:', error)
+        performanceMonitor.recordMetric('api_error', 1, 'counter', { type: 'upload', error: 'true' });
         throw error
       }
-
-      const result: AnalysisResult = await response.json()
-      return result
-    } catch (error) {
-      console.error('Erro na análise:', error)
-      throw error
-    }
-  }
+    });
+  }, [API_BASE_URL])
 
   // Função para analisar imagem via URL
-  const analyzeImageFromUrl = async (url: string) => {
-    try {
-      console.log('Enviando requisição para análise de URL:', url)
-      const response = await fetch(`${API_BASE_URL}/analyze/url`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: url
-        }),
-      })
+  const analyzeImageFromUrl = useCallback(async (url: string) => {
+    return performanceMonitor.measureTimeAsync('url_analysis', async () => {
+      try {
+        // Enviando requisição para análise de URL
+        const response = await fetch(`${API_BASE_URL}/analyze/url`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: url
+          }),
+        })
 
-      console.log('Resposta da API:', response.status, response.statusText)
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        console.error('Erro na resposta da API:', response.status, errorData)
-        const error = new Error(errorData.error || errorData.detail || `Erro na análise (${response.status})`)
-        // Adiciona o tipo de erro ao objeto de erro
-        ;(error as any).errorType = errorData.error_type || 'error'
+        // Resposta da API recebida
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          // Erro na resposta da API
+          const error = new Error(errorData.error || errorData.detail || `Erro na análise (${response.status})`)
+          // Adiciona o tipo de erro ao objeto de erro
+          ;(error as any).errorType = errorData.error_type || 'error'
+          throw error
+        }
+
+        const result: AnalysisResult = await response.json()
+        
+        // Registra métricas de cache se disponível
+        if (result.from_cache) {
+          performanceMonitor.recordMetric('cache_hit', 1, 'counter', { type: 'url' });
+        } else {
+          performanceMonitor.recordMetric('cache_miss', 1, 'counter', { type: 'url' });
+        }
+        
+        // Análise concluída com sucesso
+        return result
+      } catch (error) {
+        console.error('Erro na análise:', error)
+        performanceMonitor.recordMetric('api_error', 1, 'counter', { type: 'url', error: 'true' });
         throw error
       }
-
-      const result: AnalysisResult = await response.json()
-      console.log('Análise concluída com sucesso')
-      return result
-    } catch (error) {
-      console.error('Erro na análise:', error)
-      throw error
-    }
-  }
+    });
+  }, [API_BASE_URL])
 
   const handleAnalyze = async () => {
     if ((selectedImage && imagePreview) || (imageUrl && imagePreview)) {
@@ -252,7 +295,6 @@ export default function HomePage() {
         }
 
         if (result.success) {
-          console.log('Debug - Resposta da API:', result)
           setAnalysisResult(result)
           setAppState("results")
         } else {
@@ -279,13 +321,24 @@ export default function HomePage() {
     setError(null)
     setErrorType('error')
     setAnalysisResult(null)
-    setActiveTab('upload')
+    setActiveTab('url')
   }
 
   if (appState === "loading" && imagePreview) {
     const loadingName = selectedImage?.name || 
       (imageUrl && !imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ? "Capturando página..." : "Imagem da URL")
-    return <LoadingScreen imagePreview={imagePreview} imageName={loadingName} />
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-300">Carregando...</p>
+          </div>
+        </div>
+      }>
+        <LoadingScreen imagePreview={imagePreview} imageName={loadingName} />
+      </Suspense>
+    )
   }
 
   if (appState === "results" && imagePreview && analysisResult) {
@@ -305,23 +358,26 @@ export default function HomePage() {
       }
     }
     
-    console.log('Debug - Imagem para exibição:', {
-      originalPreview: imagePreview,
-      screenshotData: analysisResult.screenshot_data,
-      displayImage: displayImage,
-      isWebPage: imageUrl && !imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i),
-      screenshotType: analysisResult.screenshot_data ? typeof analysisResult.screenshot_data : 'undefined'
-    })
+    // Configurando imagem para exibição
     
     return (
-      <ResultsScreen
-        imagePreview={displayImage}
-        imageName={selectedImage?.name || 
-          (imageUrl && !imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ? "Screenshot da página" : "Imagem da URL")}
-        userContext={analysisResult.user_context}
-        issues={analysisResult.recommendations}
-        onNewAnalysis={handleNewAnalysis}
-      />
+      <Suspense fallback={
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-300">Carregando resultados...</p>
+          </div>
+        </div>
+      }>
+        <ResultsScreen
+          imagePreview={displayImage}
+          imageName={selectedImage?.name || 
+            (imageUrl && !imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ? "Screenshot da página" : "Imagem da URL")}
+          userContext={analysisResult.user_context}
+          issues={analysisResult.recommendations}
+          onNewAnalysis={handleNewAnalysis}
+        />
+      </Suspense>
     )
   }
 
@@ -395,8 +451,7 @@ export default function HomePage() {
             </h1>
 
             <p className="text-xl text-gray-300 mb-12 leading-relaxed max-w-4xl mx-auto">
-              Envie imagens, compartilhe URLs e obtenha insights instantâneos com IA, 
-              análise competitiva e recomendações acionáveis.
+              Envie imagens, compartilhe URLs e obtenha insights instantâneos com IA, sobre usabilidade, acessibilidade e design.
             </p>
           </motion.div>
 
@@ -412,8 +467,8 @@ export default function HomePage() {
               {/* Tab Navigation */}
               <div className="flex flex-wrap gap-2 mb-8 p-1 bg-muted/50 rounded-lg">
                 {[
-                  { id: 'upload', label: 'Enviar Arquivos', icon: Upload },
-                  { id: 'url', label: 'Por URL', icon: LinkIcon }
+                  { id: 'url', label: 'Por URL', icon: LinkIcon },
+                  { id: 'upload', label: 'Enviar Arquivos', icon: Upload }
                 ].map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
@@ -431,6 +486,38 @@ export default function HomePage() {
               </div>
 
               <AnimatePresence mode="wait">
+                {activeTab === 'url' && (
+                  <motion.div
+                    key="url"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="space-y-6">
+                      <div>
+                        <label htmlFor="url" className="block text-sm font-medium mb-2 text-white">
+                          URL do Produto
+                        </label>
+                        <div className="relative">
+                          <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <Input
+                            id="url"
+                            type="url"
+                            value={imageUrl}
+                            onChange={(e) => handleUrlChange(e.target.value)}
+                            placeholder="https://exemplo.com/produto"
+                            className="pl-10 h-12 bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-blue-400 focus:ring-blue-400"
+                          />
+                        </div>
+                        <p className="text-sm text-gray-400 mt-2">
+                          Digite uma URL para analisar a página do produto, imagens e conteúdo
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
                 {activeTab === 'upload' && (
                   <motion.div
                     key="upload"
@@ -469,10 +556,10 @@ export default function HomePage() {
                         </div>
                         <div>
                           <h3 className="text-lg font-semibold mb-2 text-white">
-                            {isDragOver ? 'Solte os arquivos aqui' : 'Envie seus arquivos de produto'}
+                            {isDragOver ? 'Solte os screenshots aqui' : 'Envie screenshots de seu produto'}
                           </h3>
                           <p className="text-gray-300">
-                            Arraste e solte arquivos aqui, ou clique para navegar
+                            Arraste e solte screenshots aqui, ou clique para navegar
                           </p>
                           <p className="text-sm text-gray-400 mt-2">
                             Suporta imagens até 5MB
@@ -513,38 +600,6 @@ export default function HomePage() {
                         </div>
                       </motion.div>
                     )}
-                  </motion.div>
-                )}
-
-                {activeTab === 'url' && (
-                  <motion.div
-                    key="url"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="space-y-6">
-                      <div>
-                        <label htmlFor="url" className="block text-sm font-medium mb-2 text-white">
-                          URL do Produto
-                        </label>
-                        <div className="relative">
-                          <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                          <Input
-                            id="url"
-                            type="url"
-                            value={imageUrl}
-                            onChange={(e) => handleUrlChange(e.target.value)}
-                            placeholder="https://exemplo.com/produto"
-                            className="pl-10 h-12 bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-blue-400 focus:ring-blue-400"
-                          />
-                        </div>
-                        <p className="text-sm text-gray-400 mt-2">
-                          Digite uma URL para analisar a página do produto, imagens e conteúdo
-                        </p>
-                      </div>
-                    </div>
                   </motion.div>
                 )}
 
@@ -615,7 +670,7 @@ export default function HomePage() {
                 {
                   icon: AlertCircle,
                   title: 'Recomendações Acionáveis',
-                  description: 'Obtenha sugestões específicas para melhorar sua estratégia de produto'
+                  description: 'Obtenha sugestões específicas para melhorar seu produto'
                 }
               ].map((feature, index) => (
                 <motion.div
