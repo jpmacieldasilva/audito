@@ -27,7 +27,13 @@ async function validateFileSignature(file: File, expectedMimeType: string): Prom
     
     if (!signature) return false;
     
-    return signature.every((byte, index) => uint8Array[index] === byte);
+    // Verifica se a assinatura corresponde aos primeiros bytes do arquivo
+    for (let i = 0; i < signature.length; i++) {
+      if (uint8Array[i] !== signature[i]) {
+        return false;
+      }
+    }
+    return true;
   } catch {
     return false;
   }
@@ -55,7 +61,8 @@ async function validateFile(file: File): Promise<{ isValid: boolean; error?: str
 
   // Verifica extensão
   const fileExtension = file.name.toLowerCase().split('.').pop();
-  if (!fileExtension || !ALLOWED_EXTENSIONS.includes(`.${fileExtension}`)) {
+  const fullExtension = fileExtension ? `.${fileExtension}` : '';
+  if (!fileExtension || !ALLOWED_EXTENSIONS.includes(fullExtension as any)) {
     return { 
       isValid: false, 
       error: `Formato não suportado. Use: ${ALLOWED_EXTENSIONS.join(', ')}`,
@@ -84,12 +91,15 @@ async function validateFile(file: File): Promise<{ isValid: boolean; error?: str
 
   // Verifica se a extensão corresponde ao tipo MIME
   const expectedExtensions = VALID_MIME_TYPES[file.type as keyof typeof VALID_MIME_TYPES];
-  if (!expectedExtensions.includes(`.${fileExtension}`)) {
-    return { 
-      isValid: false, 
-      error: 'Extensão do arquivo não corresponde ao tipo de arquivo',
-      errorType: 'error'
-    };
+  if (expectedExtensions) {
+    const isValidExtension = expectedExtensions.some(ext => ext === fullExtension);
+    if (!isValidExtension) {
+      return { 
+        isValid: false, 
+        error: 'Extensão do arquivo não corresponde ao tipo de arquivo',
+        errorType: 'error'
+      };
+    }
   }
 
   // Valida assinatura do arquivo (magic numbers)

@@ -107,14 +107,14 @@ export function processAnalysisResponse(content: string): any {
 // Constantes compartilhadas
 export const ANALYSIS_CONSTANTS = {
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
-  ALLOWED_EXTENSIONS: ['.png', '.jpg', '.jpeg'],
+  ALLOWED_EXTENSIONS: ['.png', '.jpg', '.jpeg'] as const,
   VALID_MIME_TYPES: {
     'image/png': ['.png'],
     'image/jpeg': ['.jpg', '.jpeg'],
     'image/jpg': ['.jpg', '.jpeg']
-  },
+  } as const,
   FILE_SIGNATURES: {
     'image/png': [0x89, 0x50, 0x4E, 0x47],
     'image/jpeg': [0xFF, 0xD8, 0xFF]
-  }
+  } as const
 } as const;

@@ -12,8 +12,8 @@ export default function ErrorExamples() {
       <ErrorDisplay
         error="Error: An `executablePath` or `channel` must be specified for `puppeteer-core`"
         type="warning"
-        onRetry={() => // Retry action}
-        onDismiss={() => // Dismiss action}
+        onRetry={() => {}}
+        onDismiss={() => {}}
         showDetails={true}
       />
 
@@ -21,8 +21,8 @@ export default function ErrorExamples() {
       <ErrorDisplay
         error="Arquivo muito grande. Máximo 5MB."
         type="warning"
-        onRetry={() => // Retry action}
-        onDismiss={() => // Dismiss action}
+        onRetry={() => {}}
+        onDismiss={() => {}}
         showDetails={false}
       />
 
@@ -30,8 +30,8 @@ export default function ErrorExamples() {
       <ErrorDisplay
         error="Formato não suportado. Use PNG ou JPG."
         type="error"
-        onRetry={() => // Retry action}
-        onDismiss={() => // Dismiss action}
+        onRetry={() => {}}
+        onDismiss={() => {}}
         showDetails={false}
       />
 
@@ -39,8 +39,8 @@ export default function ErrorExamples() {
       <ErrorDisplay
         error="URL inválida. Verifique o formato."
         type="error"
-        onRetry={() => // Retry action}
-        onDismiss={() => // Dismiss action}
+        onRetry={() => {}}
+        onDismiss={() => {}}
         showDetails={false}
       />
 
@@ -48,8 +48,8 @@ export default function ErrorExamples() {
       <ErrorDisplay
         error="A página demorou muito para carregar. Tente novamente ou use uma URL de imagem direta."
         type="warning"
-        onRetry={() => // Retry action}
-        onDismiss={() => // Dismiss action}
+        onRetry={() => {}}
+        onDismiss={() => {}}
         showDetails={true}
       />
 
@@ -57,8 +57,8 @@ export default function ErrorExamples() {
       <ErrorDisplay
         error="Não foi possível acessar a URL. Verifique se está correta e acessível."
         type="error"
-        onRetry={() => // Retry action}
-        onDismiss={() => // Dismiss action}
+        onRetry={() => {}}
+        onDismiss={() => {}}
         showDetails={true}
       />
 
@@ -66,8 +66,8 @@ export default function ErrorExamples() {
       <ErrorDisplay
         error="OPENAI_API_KEY não está configurada. Crie um arquivo .env.local com sua chave da API OpenAI."
         type="error"
-        onRetry={() => // Retry action}
-        onDismiss={() => // Dismiss action}
+        onRetry={() => {}}
+        onDismiss={() => {}}
         showDetails={true}
       />
 
@@ -75,8 +75,8 @@ export default function ErrorExamples() {
       <ErrorDisplay
         error="Limite de uso da API excedido. Tente novamente mais tarde."
         type="warning"
-        onRetry={() => // Retry action}
-        onDismiss={() => // Dismiss action}
+        onRetry={() => {}}
+        onDismiss={() => {}}
         showDetails={false}
       />
     </div>

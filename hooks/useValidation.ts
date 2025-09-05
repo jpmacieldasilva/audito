@@ -35,7 +35,7 @@ export function useValidation() {
 
     // Verifica extensão
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-    if (!ALLOWED_EXTENSIONS.includes(fileExtension)) {
+    if (!ALLOWED_EXTENSIONS.includes(fileExtension as any)) {
       return {
         isValid: false,
         error: 'Formato não suportado. Use PNG ou JPG.',
@@ -55,12 +55,15 @@ export function useValidation() {
 
     // Verifica se a extensão corresponde ao tipo MIME
     const expectedExtensions = VALID_MIME_TYPES[file.type as keyof typeof VALID_MIME_TYPES];
-    if (!expectedExtensions.includes(fileExtension)) {
-      return {
-        isValid: false,
-        error: 'Extensão do arquivo não corresponde ao tipo de arquivo',
-        errorType: 'error'
-      };
+    if (expectedExtensions) {
+      const isValidExtension = expectedExtensions.some(ext => ext === fileExtension);
+      if (!isValidExtension) {
+        return {
+          isValid: false,
+          error: 'Extensão do arquivo não corresponde ao tipo de arquivo',
+          errorType: 'error'
+        };
+      }
     }
 
     return { isValid: true };
