@@ -4,7 +4,7 @@ import puppeteer from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 import { getClientIP, checkRateLimit } from '@/lib/rate-limit';
 import { generateUrlHash, CACHE_CONFIG } from '@/lib/cache';
-import { createAnalysisPrompt, processAnalysisResponse } from '@/lib/analysis-utils';
+import { createAnalysisPrompt, processAnalysisResponse, detectUserLanguage } from '@/lib/analysis-utils';
 import cache from '@/lib/cache';
 
 // Inicializa cliente OpenAI
@@ -260,12 +260,38 @@ async function captureWebsiteScreenshot(url: string): Promise<{ success: boolean
 
     // Navega para a página com timeout de 30 segundos
     await page.goto(url, { 
-      waitUntil: 'domcontentloaded', 
+      waitUntil: 'networkidle0', // Aguarda até não haver requisições de rede por 500ms
       timeout: 30000 
     });
     
-    // Aguarda um pouco para o conteúdo carregar
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Aguarda elementos críticos carregarem
+    try {
+      // Aguarda até 5 segundos por elementos comuns da página
+      await Promise.race([
+        page.waitForSelector('body', { timeout: 5000 }),
+        page.waitForSelector('main', { timeout: 5000 }),
+        page.waitForSelector('[role="main"]', { timeout: 5000 }),
+        page.waitForSelector('.main-content', { timeout: 5000 }),
+        page.waitForSelector('#main', { timeout: 5000 })
+      ]);
+    } catch (error) {
+      // Se não encontrar elementos específicos, continua mesmo assim
+      console.log('Elementos específicos não encontrados, continuando...');
+    }
+    
+    // Aguarda um tempo adicional para garantir que recursos pesados carreguem
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Aguarda por imagens carregarem (se houver)
+    try {
+      await page.waitForFunction(() => {
+        const images = Array.from(document.querySelectorAll('img'));
+        return images.every(img => img.complete);
+      }, { timeout: 5000 });
+    } catch (error) {
+      // Se não conseguir aguardar todas as imagens, continua
+      console.log('Algumas imagens podem não ter carregado completamente');
+    }
     
     // Captura screenshot em formato PNG
     const screenshotBuffer = await page.screenshot({
@@ -274,10 +300,9 @@ async function captureWebsiteScreenshot(url: string): Promise<{ success: boolean
     });
     
     // Converte para ArrayBuffer
-    const arrayBuffer = screenshotBuffer.buffer.slice(
-      screenshotBuffer.byteOffset,
-      screenshotBuffer.byteOffset + screenshotBuffer.byteLength
-    );
+    const arrayBuffer = new ArrayBuffer(screenshotBuffer.byteLength);
+    const uint8Array = new Uint8Array(arrayBuffer);
+    uint8Array.set(new Uint8Array(screenshotBuffer.buffer, screenshotBuffer.byteOffset, screenshotBuffer.byteLength));
     
     // Verifica tamanho da imagem
     if (arrayBuffer.byteLength > MAX_FILE_SIZE) {
@@ -421,8 +446,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Detecta idioma do usuário
+    const acceptLanguage = request.headers.get('accept-language');
+    const userLanguage = detectUserLanguage(acceptLanguage);
+    
     // Cria prompt de análise
-    const prompt = createAnalysisPrompt(productContext);
+    const prompt = createAnalysisPrompt(productContext, userLanguage);
     
     // Chama OpenAI GPT-4 Vision
     const response = await openai.chat.completions.create({

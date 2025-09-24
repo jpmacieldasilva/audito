@@ -1,12 +1,84 @@
 // Utilitários compartilhados para análise de interface
 // Centraliza funções duplicadas entre as APIs
 
+// Função para detectar idioma do usuário baseado no Accept-Language header
+export function detectUserLanguage(acceptLanguage: string | null): string {
+  if (!acceptLanguage) return 'pt'; // Português como padrão
+  
+  // Prioriza idiomas comuns
+  const languageMap: { [key: string]: string } = {
+    'pt': 'pt',
+    'pt-br': 'pt',
+    'pt-pt': 'pt',
+    'en': 'en',
+    'en-us': 'en',
+    'en-gb': 'en',
+    'es': 'es',
+    'es-es': 'es',
+    'es-mx': 'es',
+    'fr': 'fr',
+    'fr-fr': 'fr',
+    'de': 'de',
+    'de-de': 'de',
+    'it': 'it',
+    'it-it': 'it',
+    'ja': 'ja',
+    'ja-jp': 'ja',
+    'ko': 'ko',
+    'ko-kr': 'ko',
+    'zh': 'zh',
+    'zh-cn': 'zh',
+    'zh-tw': 'zh',
+    'ru': 'ru',
+    'ru-ru': 'ru'
+  };
+  
+  // Extrai idiomas do header Accept-Language
+  const languages = acceptLanguage
+    .split(',')
+    .map(lang => lang.split(';')[0].trim().toLowerCase())
+    .map(lang => languageMap[lang] || lang.split('-')[0]);
+  
+  // Retorna o primeiro idioma suportado ou português como padrão
+  return languages.find(lang => languageMap[lang]) || 'pt';
+}
+
 // Função para criar prompt de análise (centralizada)
-export function createAnalysisPrompt(productContext: string): string {
+export function createAnalysisPrompt(productContext: string, userLanguage: string = 'pt'): string {
   const systemContext = productContext || "interface de usuário";
   
-  return `Act as a Senior Product Designer with extensive experience in usability and interface design for ${systemContext}.
-Your task is to provide a critical and constructive analysis of the provided screen. The goal is to identify strengths and weaknesses, always focusing on improving user experience and product efficiency.
+  // Define instruções baseadas no idioma do usuário
+  const languageInstructions = {
+    'pt': {
+      role: "Atue como um Designer de Produto Sênior com vasta experiência em usabilidade e design de interface para",
+      task: "Sua tarefa é fornecer uma análise crítica e construtiva da tela fornecida. O objetivo é identificar pontos fortes e fracos, sempre focando na melhoria da experiência do usuário e eficiência do produto.",
+      responseFormat: "Forneça sua análise no seguinte formato JSON:",
+      focus: "Foque em fornecer recomendações acionáveis e específicas que podem ser implementadas imediatamente para melhorar a experiência do usuário."
+    },
+    'en': {
+      role: "Act as a Senior Product Designer with extensive experience in usability and interface design for",
+      task: "Your task is to provide a critical and constructive analysis of the provided screen. The goal is to identify strengths and weaknesses, always focusing on improving user experience and product efficiency.",
+      responseFormat: "Provide your analysis in the following JSON format:",
+      focus: "Focus on providing actionable, specific recommendations that can be immediately implemented to improve the user experience."
+    },
+    'es': {
+      role: "Actúa como un Diseñador de Producto Senior con amplia experiencia en usabilidad y diseño de interfaz para",
+      task: "Tu tarea es proporcionar un análisis crítico y constructivo de la pantalla proporcionada. El objetivo es identificar fortalezas y debilidades, siempre enfocándose en mejorar la experiencia del usuario y la eficiencia del producto.",
+      responseFormat: "Proporciona tu análisis en el siguiente formato JSON:",
+      focus: "Enfócate en proporcionar recomendaciones accionables y específicas que pueden implementarse inmediatamente para mejorar la experiencia del usuario."
+    },
+    'fr': {
+      role: "Agissez comme un Designer de Produit Senior avec une vaste expérience en usabilité et design d'interface pour",
+      task: "Votre tâche est de fournir une analyse critique et constructive de l'écran fourni. L'objectif est d'identifier les forces et les faiblesses, en se concentrant toujours sur l'amélioration de l'expérience utilisateur et l'efficacité du produit.",
+      responseFormat: "Fournissez votre analyse dans le format JSON suivant:",
+      focus: "Concentrez-vous sur la fourniture de recommandations exploitables et spécifiques qui peuvent être mises en œuvre immédiatement pour améliorer l'expérience utilisateur."
+    }
+  };
+  
+  const instructions = languageInstructions[userLanguage as keyof typeof languageInstructions] || languageInstructions['pt'];
+  
+  return `${instructions.role} ${systemContext}.
+${instructions.task}
 
 ## Analysis Guidelines:
 
@@ -36,7 +108,7 @@ Your task is to provide a critical and constructive analysis of the provided scr
 - Identify any technical constraints affecting UX
 
 ## Response Format:
-Provide your analysis in the following JSON format:
+${instructions.responseFormat}
 {
   "overall_assessment": "Brief overall evaluation of the interface",
   "user_context": "Context about the target user and use case",
@@ -52,7 +124,7 @@ Provide your analysis in the following JSON format:
   ]
 }
 
-Focus on providing actionable, specific recommendations that can be immediately implemented to improve the user experience.`;
+${instructions.focus}`;
 }
 
 // Função para processar resposta do OpenAI (centralizada)

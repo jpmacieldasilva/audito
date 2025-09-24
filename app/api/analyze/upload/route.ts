@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getClientIP, checkRateLimit } from '@/lib/rate-limit';
 import { generateFileHash, CACHE_CONFIG } from '@/lib/cache';
-import { createAnalysisPrompt, processAnalysisResponse, ANALYSIS_CONSTANTS } from '@/lib/analysis-utils';
+import { createAnalysisPrompt, processAnalysisResponse, detectUserLanguage, ANALYSIS_CONSTANTS } from '@/lib/analysis-utils';
 import cache from '@/lib/cache';
 
 // Inicializa cliente OpenAI
@@ -223,8 +223,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Detecta idioma do usuário
+    const acceptLanguage = request.headers.get('accept-language');
+    const userLanguage = detectUserLanguage(acceptLanguage);
+    
     // Cria prompt de análise
-    const prompt = createAnalysisPrompt(productContext);
+    const prompt = createAnalysisPrompt(productContext, userLanguage);
     
     // Chama OpenAI GPT-4 Vision
     const response = await openai.chat.completions.create({
